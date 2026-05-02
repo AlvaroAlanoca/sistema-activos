@@ -24,7 +24,27 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Forms\Components\TextInput::make('name')->required(),
+Forms\Components\TextInput::make('email')->email()->required(),
+Forms\Components\TextInput::make('password')->password()->required()->dehydrateStateUsing(fn ($state) => bcrypt($state))->hiddenOn('edit'),
+
+// El selector de Rol
+Forms\Components\Select::make('rol')
+    ->options([
+        'admin' => 'Administrador',
+        'responsable' => 'Responsable de Activos',
+    ])
+    ->required()
+    ->reactive(), // Hace que el formulario reaccione al cambio
+
+// El selector para conectarlo con la tabla Responsables
+Forms\Components\Select::make('id_responsable')
+    ->label('Vincular con ficha de Responsable')
+    ->relationship('responsable', 'nombre_apellido')
+    ->searchable()
+    // Solo mostramos este campo si el rol elegido es 'responsable'
+    ->visible(fn (\Filament\Forms\Get $get) => $get('rol') === 'responsable')
+    ->required(fn (\Filament\Forms\Get $get) => $get('rol') === 'responsable'),
             ]);
     }
 

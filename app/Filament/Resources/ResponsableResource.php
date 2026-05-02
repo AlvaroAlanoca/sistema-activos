@@ -24,84 +24,185 @@ class ResponsableResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    public static function form(Form $form): Form
+  public static function form(Form $form): Form
     {
-    return $form->schema([
-            Forms\Components\TextInput::make('nombre_apellido')
-                ->required()
-                ->maxLength(255),
+        return $form->schema([
             
-            // Relacionamos con la tabla pivote de oficinas_cargos
-            Forms\Components\Select::make('id_oficinas_cargos')
-                ->label('Oficina y Cargo')
-                ->relationship('oficinaCargo', 'idoficinas_cargos') // Asegúrate de tener esta relación en el modelo Responsable
-                ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->oficina->descripcion} - {$record->cargo->descripcion}")
-                ->required(),
+            \Filament\Forms\Components\Section::make('Datos Personales del Funcionario')
+                ->description('Ingrese la información básica del responsable.')
+                ->schema([
+                    Forms\Components\TextInput::make('nombre_apellido')
+                        ->label('Apellidos y Nombres')
+                        ->required()
+                        ->maxLength(255),
+
+                    Forms\Components\TextInput::make('ci')
+                        ->label('Carnet de Identidad (C.I.)')
+                        ->required()
+                        ->maxLength(20)
+                        // ¡TRUCO PRO! Esto evita que registres el mismo CI dos veces, 
+                        // pero te permite editar al usuario sin que lance error.
+                        ->unique(ignoreRecord: true), 
+                ])->columns(2), // Pone estos dos campos en 2 columnas (uno al lado del otro)
+
+            \Filament\Forms\Components\Section::make('Ubicación y Cargo')
+                ->description('Determine dónde trabaja y qué cargo ocupa en la institución.')
+                ->schema([
+                    Forms\Components\TextInput::make('gerencia')
+                        ->label('Gerencia a la que pertenece')
+                        ->placeholder('Ej: Gerencia Administrativa Financiera')
+                        ->required()
+                        ->maxLength(255),
+
+                    // Relacionamos con la tabla pivote de oficinas_cargos
+                    Forms\Components\Select::make('id_oficinas_cargos')
+                        ->label('Oficina y Cargo Exacto')
+                        ->relationship('oficinaCargo', 'idoficinas_cargos') 
+                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->oficina->descripcion} - {$record->cargo->descripcion}")
+                        ->searchable()
+                        ->preload()
+                        ->required(),
+                ])->columns(2),
         ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+
             ->columns([
-            Tables\Columns\TextColumn::make('nombre_apellido')->searchable(),
-            Tables\Columns\TextColumn::make('id_oficinas_cargos')->label('Asignación'),
-        ])
+                Tables\Columns\TextColumn::make('nombre_apellido')
+                    ->label('Nombres y Apellidos')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold'),
+
+                // Agregamos el C.I.
+                Tables\Columns\TextColumn::make('ci')
+                    ->label('C.I.')
+                    ->searchable(),
+
+                // Mostramos la descripción del Cargo (Navegando por la relación)
+                Tables\Columns\TextColumn::make('oficinaCargo.cargo.descripcion')
+                    ->label('Cargo')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap(), // Permite que el texto baje a la siguiente línea si es muy largo
+
+                // NUEVA COLUMNA: Indicador de Bienes Asignados
+                Tables\Columns\TextColumn::make('bienes_asignados')
+                    ->label('Estado de Activos')
+                    // Calculamos en tiempo real cuántos bienes tiene "ENTREGADOS"
+                    ->getStateUsing(function (\App\Models\Responsable $record) {
+                        return \App\Models\ActaItem::whereHas('acta', function ($query) use ($record) {
+                                $query->where('id_responsables', $record->getKey());
+                            })
+                            ->whereHas('bien', function ($query) {
+                                $query->where('estado', 'ENTREGADO');
+                            })
+                            ->count();
+                    })
+                    ->badge() // Lo convierte en una etiqueta de color
+                    // Si tiene más de 0 es verde, si es 0 es gris
+                    ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
+                    // Cambiamos el número por un texto más amigable
+                    ->formatStateUsing(fn (int $state): string => $state > 0 ? "Tiene {$state} activo(s)" : 'Sin activos asignados'),
+            ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('devolucion_total')
-                ->label('Devolver Todo')
-                ->icon('heroicon-o-arrow-path')
-                ->color('success')
-                ->requiresConfirmation()
-                ->modalHeading('Procesar Devolución Masiva')
-                ->modalDescription('¿Está seguro de que desea registrar la devolución de TODOS los bienes asignados a esta persona?')
-                ->action(function ($record) {
-                    // 1. Buscamos los items entregados a este responsable a través de sus actas
-                    $itemsPendientes = ActaItem::whereHas('acta', function ($query) use ($record) {
-                        $query->where('id_responsables', $record->idresponsables);
-                    })->whereHas('bien', function ($query) {
-                        $query->where('estado', 'ENTREGADO');
-                    })->get();
+                
+                // NUEVO BOTÓN: Devolución Específica con Casillas
+                Tables\Actions\Action::make('recibir_devolucion')
+                    ->label('Recibir Devolución')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->color('danger')
+                    ->modalHeading(fn ($record) => 'Devolución de Activos - ' . $record->nombre_apellido)
+                    ->modalWidth('2xl')
+                    ->form(function ($record) {
+                        
+                        // 1. Buscamos los bienes ENTREGADOS a esta persona
+                        $bienesAsignados = ActaItem::with('bien')
+                            ->whereHas('acta', function ($query) use ($record) {
+                                $query->where('id_responsables', $record->idresponsables);
+                            })
+                            ->whereHas('bien', function ($query) {
+                                $query->where('estado', 'ENTREGADO');
+                            })
+                            ->get()
+                            // Formateamos para las casillas: [ID => "Código - Descripción"]
+                            ->mapWithKeys(fn ($item) => [$item->bien->idbienes => "[{$item->bien->codigo}] - {$item->bien->descripcion}"])
+                            ->toArray();
 
-                    if ($itemsPendientes->isEmpty()) {
-                        Notification::make()
-                            ->title('Sin bienes pendientes')
-                            ->warning()
-                            ->send();
-                        return;
-                    }
+                        // 2. Si no tiene nada, mostramos un mensaje verde
+                        if (empty($bienesAsignados)) {
+                            return [
+                                \Filament\Forms\Components\Placeholder::make('sin_bienes')
+                                    ->label('')
+                                    ->content('✅ Este funcionario no tiene bienes pendientes por devolver.')
+                                    ->extraAttributes(['style' => 'color: green; font-weight: bold; text-align: center;']),
+                            ];
+                        }
 
-                    // 2. Creamos el Acta de Devolución automáticamente
-                    $nuevaActa = Acta::create([
-                        'tipo' => 'DEVOLUCION',
-                        'numero_acta' => 'DEV-' . now()->format('Ymd-His'),
-                        'id_responsables' => $record->idresponsables,
-                    ]);
+                        // 3. Si tiene bienes, mostramos las casillas
+                        return [
+                            \Filament\Forms\Components\CheckboxList::make('bienes_a_devolver')
+                                ->label('Seleccione los equipos que está entregando físicamente:')
+                                ->options($bienesAsignados)
+                                ->bulkToggleable() // Permite seleccionar todos con 1 clic
+                                ->columns(1)
+                                ->required(),
 
-                    // 3. Procesamos cada bien
-                    foreach ($itemsPendientes as $item) {
-                        // Creamos el registro en la nueva acta
-                        ActaItem::create([
-                            'id_acta' => $nuevaActa->idacta,
-                            'id_bienes' => $item->id_bienes,
-                            'estado' => 'Bueno', // O podrías pedir el estado en un modal
+                            \Filament\Forms\Components\Textarea::make('observaciones')
+                                ->label('Observaciones / Estado del equipo al devolver')
+                                ->placeholder('Ej: Monitor con rayones, teclado funcional...')
+                                ->required(),
+                        ];
+                    })
+                    ->action(function ($record, array $data) {
+                        
+                        // Si no seleccionó nada o no había bienes, detenemos la acción
+                        if (empty($data['bienes_a_devolver'])) {
+                            return; 
+                        }
+
+                        // 1. Creamos la nueva Acta de Devolución
+                        $nuevaActa = Acta::create([
+                            'tipo' => 'DEVOLUCION',
+                            'numero_acta' => 'DEV-' . now()->format('Ymd-His'),
+                            'id_responsables' => $record->idresponsables,
+                            'observaciones' => $data['observaciones'],
                         ]);
 
-                        // Liberamos el bien
-                        Bien::where('idbienes', $item->id_bienes)
-                            ->update(['estado' => 'DISPONIBLE']);
-                    }
+                        // 2. Registramos los ítems y los volvemos "DISPONIBLES"
+                        foreach ($data['bienes_a_devolver'] as $idBien) {
+                            
+                            ActaItem::create([
+                                'id_acta' => $nuevaActa->idacta,
+                                'id_bienes' => $idBien,
+                                'estado' => 'Devuelto', // Puedes poner 'Bueno', 'Malo', etc.
+                            ]);
 
-                    Notification::make()
-                        ->title('Devolución procesada con éxito')
-                        ->body("Se liberaron {$itemsPendientes->count()} bienes.")
-                        ->success()
-                        ->send();
-                }),
+                            // Actualizamos tu tabla de bienes para que vuelvan al almacén
+                            Bien::where('idbienes', $idBien)->update(['estado' => 'DISPONIBLE']);
+                        }
+
+                        // 3. Notificación y Botón de Imprimir
+                        Notification::make()
+                            ->success()
+                            ->title('Devolución Procesada')
+                            ->body('Los bienes seleccionados han regresado al estado DISPONIBLE.')
+                            ->actions([
+                                \Filament\Notifications\Actions\Action::make('imprimir')
+                                    ->label('Imprimir Comprobante')
+                                    ->button()
+                                    ->color('danger')
+                                    ->url(route('acta.imprimir', $nuevaActa), shouldOpenInNewTab: true),
+                            ])
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -109,6 +210,14 @@ class ResponsableResource extends Resource
                 ]),
             ]);
     }
+    public static function canViewAny(): bool
+{
+    /** @var \App\Models\User|null $user */
+    $user = \Illuminate\Support\Facades\Auth::user();
+    
+    // Solo devuelve 'true' (visible) si el rol es admin
+    return $user && $user->rol === 'admin';
+}
 
     public static function getRelations(): array
     {

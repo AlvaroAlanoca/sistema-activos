@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class TipoBien extends Model {
     protected $table = 'tipo_bien';
     protected $primaryKey = 'idtipo_bien';
-    public $timestamps = false;
+
     protected $fillable = [
         'id_rubro', 
         'descripcion'

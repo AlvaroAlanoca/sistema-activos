@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class OficinaCargoResource extends Resource
 {
@@ -58,6 +59,14 @@ class OficinaCargoResource extends Resource
             ]);
     }
 
+        public static function canViewAny(): bool
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        
+        // Solo retorna "true" (mostrar) si el usuario es administrador
+        return $user && $user->rol === 'admin';
+    }
     public static function getRelations(): array
     {
         return [

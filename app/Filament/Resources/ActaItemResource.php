@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
+
 
 class ActaItemResource extends Resource
 {
@@ -95,6 +97,14 @@ class ActaItemResource extends Resource
         return [
             //
         ];
+    }
+        public static function canViewAny(): bool
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        
+        // Solo retorna "true" (mostrar) si el usuario es administrador
+        return $user && $user->rol === 'admin';
     }
 
     public static function getPages(): array

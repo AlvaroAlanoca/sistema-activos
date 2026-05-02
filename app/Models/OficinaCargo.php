@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class OficinaCargo extends Model {
     protected $table = 'oficinas_cargos';
     protected $primaryKey = 'idoficinas_cargos';
-    public $timestamps = false;
+
     protected $fillable = [
         'id_oficinas',
         'id_cargos',

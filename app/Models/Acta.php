@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class Acta extends Model {
     protected $table = 'actas';
     protected $primaryKey = 'idacta';
-    public $timestamps = false;
+
     protected $fillable = ['tipo', 
     'numero_acta', 
     'id_responsables'];
