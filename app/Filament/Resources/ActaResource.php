@@ -71,8 +71,8 @@ class ActaResource extends Resource
                             ]),
                     ]),
 
-// SECCIÓN 2: DATOS DEL FUNCIONARIO RECEPTOR
-Forms\Components\Section::make('Datos Del Funcionario Receptor')
+                // SECCIÓN 2: DATOS DEL FUNCIONARIO RECEPTOR
+                Forms\Components\Section::make('Datos Del Funcionario Receptor')
                     ->schema([
                         Forms\Components\Select::make('id_responsables')
                             ->label('Búsqueda Apellidos y Nombres')

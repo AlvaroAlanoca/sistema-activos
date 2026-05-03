@@ -90,22 +90,38 @@ class ResponsableResource extends Resource
                     ->wrap(), // Permite que el texto baje a la siguiente línea si es muy largo
 
                 // NUEVA COLUMNA: Indicador de Bienes Asignados
+
+// NUEVA COLUMNA: Indicador de Bienes Asignados (Lógica Infalible PHP+DB)
                 Tables\Columns\TextColumn::make('bienes_asignados')
                     ->label('Estado de Activos')
-                    // Calculamos en tiempo real cuántos bienes tiene "ENTREGADOS"
                     ->getStateUsing(function (\App\Models\Responsable $record) {
-                        return \App\Models\ActaItem::whereHas('acta', function ($query) use ($record) {
+                        
+                        // 1. Traemos todo el historial de este usuario con equipos que siguen "ENTREGADOS"
+                        $misItems = \App\Models\ActaItem::with('bien')
+                            ->whereHas('acta', function ($query) use ($record) {
                                 $query->where('id_responsables', $record->getKey());
                             })
                             ->whereHas('bien', function ($query) {
                                 $query->where('estado', 'ENTREGADO');
                             })
-                            ->count();
+                            ->get();
+
+                        $bienesReales = 0;
+
+                        // 2. Filtramos uno por uno preguntando si es el ÚLTIMO movimiento absoluto
+                        foreach ($misItems as $item) {
+                            $ultimoId = \App\Models\ActaItem::where('id_bienes', $item->id_bienes)->max('idacta_items');
+                            
+                            // Si mi registro coincide con el último movimiento del equipo, soy el dueño actual
+                            if ($item->idacta_items === $ultimoId) {
+                                $bienesReales++;
+                            }
+                        }
+
+                        return $bienesReales;
                     })
-                    ->badge() // Lo convierte en una etiqueta de color
-                    // Si tiene más de 0 es verde, si es 0 es gris
+                    ->badge() 
                     ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
-                    // Cambiamos el número por un texto más amigable
                     ->formatStateUsing(fn (int $state): string => $state > 0 ? "Tiene {$state} activo(s)" : 'Sin activos asignados'),
             ])
             ->filters([
@@ -123,18 +139,26 @@ class ResponsableResource extends Resource
                     ->modalWidth('2xl')
                     ->form(function ($record) {
                         
-                        // 1. Buscamos los bienes ENTREGADOS a esta persona
-                        $bienesAsignados = ActaItem::with('bien')
+// 1. Buscamos el historial de bienes de esta persona
+                        $misItems = \App\Models\ActaItem::with('bien')
                             ->whereHas('acta', function ($query) use ($record) {
-                                $query->where('id_responsables', $record->idresponsables);
+                                $query->where('id_responsables', $record->getKey());
                             })
                             ->whereHas('bien', function ($query) {
                                 $query->where('estado', 'ENTREGADO');
                             })
-                            ->get()
-                            // Formateamos para las casillas: [ID => "Código - Descripción"]
-                            ->mapWithKeys(fn ($item) => [$item->bien->idbienes => "[{$item->bien->codigo}] - {$item->bien->descripcion}"])
-                            ->toArray();
+                            ->get();
+
+                        $bienesAsignados = [];
+
+                        // 2. Armamos la lista de casillas SOLO con los que realmente posee hoy
+                        foreach ($misItems as $item) {
+                            $ultimoId = \App\Models\ActaItem::where('id_bienes', $item->id_bienes)->max('idacta_items');
+                            
+                            if ($item->idacta_items === $ultimoId) {
+                                $bienesAsignados[$item->bien->idbienes] = "[{$item->bien->codigo}] - {$item->bien->descripcion}";
+                            }
+                        }
 
                         // 2. Si no tiene nada, mostramos un mensaje verde
                         if (empty($bienesAsignados)) {
