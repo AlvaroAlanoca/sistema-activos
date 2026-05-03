@@ -148,13 +148,34 @@ public static function form(Form $form): Form
                             // SECCIÓN 2: DATOS DEL RECEPTOR (Dinámico, igual que en tu acta)
                             \Filament\Forms\Components\Section::make('Datos Del Funcionario Receptor')
                                 ->schema([
-                                    \Filament\Forms\Components\Select::make('id_receptor')
+\Filament\Forms\Components\Select::make('id_receptor')
                                         ->label('Buscar Funcionario (Apellidos y Nombres)')
                                         ->options(function () {
-                                            // Filtramos para que no pueda transferirse a sí mismo
-                                            $miId = Auth::user()?->responsable_id;
-                                            return \App\Models\Responsable::where('idresponsables', '!=', $miId)
-                                                ->pluck('nombre_apellido', 'idresponsables');
+                                            // 1. Buscamos a TODOS los usuarios 'admin' y extraemos sus IDs
+                                            $adminIds = \App\Models\User::where('rol', 'admin')
+                                                ->whereNotNull('responsable_id')
+                                                ->pluck('responsable_id')
+                                                ->toArray();
+
+                                            // 2. Agregamos el ID del usuario actual (tú) a la lista de bloqueados
+                                            $miId = \Illuminate\Support\Facades\Auth::user()?->responsable_id;
+                                            if ($miId && !in_array($miId, $adminIds)) {
+                                                $adminIds[] = $miId;
+                                            }
+
+                                            // 3. Preparamos la consulta a la base de datos
+                                            $query = \App\Models\Responsable::query();
+                                            
+                                            // Aplicamos el filtro numérico si hay administradores
+                                            if (!empty($adminIds)) {
+                                                $query->whereNotIn('idresponsables', $adminIds);
+                                            }
+
+                                            // 4. LA BALA DE PLATA: Ocultar nombres que contengan la palabra "Admin"
+                                            $query->whereRaw('UPPER(nombre_apellido) NOT LIKE ?', ['%ADMIN%']);
+
+                                            // Retornamos la lista formateada para el Select
+                                            return $query->pluck('nombre_apellido', 'idresponsables');
                                         })
                                         ->searchable()
                                         ->live() // Recarga la pantalla al elegir

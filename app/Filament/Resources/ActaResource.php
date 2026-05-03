@@ -74,26 +74,36 @@ class ActaResource extends Resource
                 // SECCIÓN 2: DATOS DEL FUNCIONARIO RECEPTOR
                 Forms\Components\Section::make('Datos Del Funcionario Receptor')
                     ->schema([
-                        Forms\Components\Select::make('id_responsables')
+                Forms\Components\Select::make('id_responsables')
                             ->label('Búsqueda Apellidos y Nombres')
-                            // Usamos modifyQueryUsing para filtrar la relación en tiempo real
                             ->relationship(
                                 name: 'responsable', 
                                 titleAttribute: 'nombre_apellido',
                                 modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query) {
-                                    // 1. Obtenemos el ID de responsable del usuario actual (el Admin)
-                                    $miId = Auth::user()?->responsable_id;
                                     
-                                    // 2. Si existe, lo excluimos de la lista
-                                    if ($miId) {
-                                        $query->where('idresponsables', '!=', $miId);
+                                    // 1. Buscamos a TODOS los usuarios 'admin' y extraemos solo sus números de responsable_id
+                                    // Esto nos dará un arreglo limpio, por ejemplo: [2]
+                                    $adminIds = \App\Models\User::where('rol', 'admin')
+                                        ->whereNotNull('responsable_id')
+                                        ->pluck('responsable_id')
+                                        ->toArray();
+
+                                    // 2. Si el usuario actual (tú) no está en esa lista, lo agregamos para también ocultarte
+                                    $miId = \Illuminate\Support\Facades\Auth::user()?->responsable_id;
+                                    if ($miId && !in_array($miId, $adminIds)) {
+                                        $adminIds[] = $miId;
+                                    }
+
+                                    // 3. Aplicamos el filtro definitivo: ¡Que no traiga a nadie que esté en esta lista de excluidos!
+                                    if (!empty($adminIds)) {
+                                        $query->whereNotIn('idresponsables', $adminIds);
                                     }
                                 }
                             )
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->live(), 
+                            ->live(),
 
                         Forms\Components\Grid::make(3)
                             ->schema([
