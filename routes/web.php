@@ -25,28 +25,43 @@ Route::get('/acta/{acta}/imprimir', function (App\Models\Acta $acta) {
         'items.bien'
     ]);
 
-    // 2. Cargamos al solicitante (de forma segura para que el editor no marque error)
-    $solicitante = null;
+    // 2. Cargamos al Administrador (el usuario que tiene la sesión iniciada)
+    $adminResponsable = null;
     
     /** @var \App\Models\User|null $user */
     $user = Illuminate\Support\Facades\Auth::user();
 
     if ($user) {
-        $solicitante = $user->responsable()->with(['oficinaCargo.oficina', 'oficinaCargo.cargo'])->first();
+        $adminResponsable = $user->responsable()->with(['oficinaCargo.oficina', 'oficinaCargo.cargo'])->first();
     }
 
-    // 3. Renderizamos la vista PDF inyectándole las variables exactas
-$pdf = Pdf::loadView('pdf.acta', [
+    // 3. LA MAGIA: Asignamos quién es quién dependiendo de la operación
+    if ($acta->tipo === 'DEVOLUCION') {
+        // Si devuelven algo: El funcionario entrega, el admin recibe.
+        $entregador = $acta->responsable;
+        $receptor = $adminResponsable;
+    } else {
+        // Si es transferencia: El admin entrega, el funcionario recibe.
+        $entregador = $adminResponsable;
+        $receptor = $acta->responsable;
+    }
+
+    // 4. Renderizamos la vista PDF inyectándole las variables exactas
+    $pdf = Pdf::loadView('pdf.acta', [
         'acta' => $acta,
-        'receptor' => $acta->responsable,
-        'solicitante' => $solicitante, // <-- Si falta esta línea, da el error que mencionas
+        'entregador' => $entregador, // Usar esta variable en el Blade para "Entregué Conforme"
+        'receptor' => $receptor,     // Usar esta variable en el Blade para "Recibí Conforme"
         'items' => $acta->items,
+        
+        // Salvavidas: Por si tu diseño en Blade todavía usa $solicitante en alguna línea
+        'solicitante' => $entregador, 
     ]);
 
-    // 4. Mostramos el PDF en una nueva pestaña
-// Limpiamos el nombre para que sea seguro para Windows/Linux
-$nombreSeguro = str_replace('/', '-', $acta->numero_acta);
+    // 5. Mostramos el PDF en una nueva pestaña
+    // Limpiamos el nombre para que sea seguro para Windows/Linux
+    $nombreSeguro = str_replace('/', '-', $acta->numero_acta);
 
-return $pdf->stream("Transferencia_{$nombreSeguro}.pdf");
+    // Cambié la palabra "Transferencia" por "Acta" para que sea genérico (sirva para Devoluciones también)
+    return $pdf->stream("Acta_{$nombreSeguro}.pdf");
 
 })->name('acta.imprimir')->middleware('auth');
