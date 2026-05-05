@@ -13,8 +13,9 @@ class CreateOficinaCargo extends CreateRecord
     {
         return [
             $this->getCreateFormAction(), // Botón de Crear principal
+            $this->getCreateAnotherFormAction(),
             $this->getCancelFormAction(), // Botón de Cancelar
-            // Al no incluir getCreateAnotherFormAction(), el botón desaparece
+
         ];
     }
     protected function getCreatedNotification(): ?\Filament\Notifications\Notification

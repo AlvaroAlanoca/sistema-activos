@@ -44,6 +44,9 @@ $pdf = Pdf::loadView('pdf.acta', [
     ]);
 
     // 4. Mostramos el PDF en una nueva pestaña
-    return $pdf->stream("Transferencia_{$acta->numero_acta}.pdf");
+// Limpiamos el nombre para que sea seguro para Windows/Linux
+$nombreSeguro = str_replace('/', '-', $acta->numero_acta);
+
+return $pdf->stream("Transferencia_{$nombreSeguro}.pdf");
 
 })->name('acta.imprimir')->middleware('auth');

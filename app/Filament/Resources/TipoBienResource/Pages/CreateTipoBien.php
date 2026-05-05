@@ -9,12 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateTipoBien extends CreateRecord
 {
     protected static string $resource = TipoBienResource::class;
-    protected function getCreatedNotification(): ?\Filament\Notifications\Notification
+//Si quieres que al darle "Crear" te mande directo a la lista
+    protected function getRedirectUrl(): string
     {
-    return \Filament\Notifications\Notification::make()
-        ->success()
-        ->title('Registro Exitoso')
-        ->body('Los datos se han guardado correctamente en el sistema.');
+        return $this->getResource()::getUrl('index');
     }
-
 }

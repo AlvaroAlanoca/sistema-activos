@@ -10,10 +10,5 @@ class EditOficina extends EditRecord
 {
     protected static string $resource = OficinaResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\DeleteAction::make(),
-        ];
-    }
+
 }

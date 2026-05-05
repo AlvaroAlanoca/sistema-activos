@@ -26,7 +26,7 @@ class ActaResource extends Resource
 
     public static function form(Form $form): Form
     {
-/** @var \App\Models\User|null $user */
+        /** @var \App\Models\User|null $user */
         $user = \Illuminate\Support\Facades\Auth::user();
         
         // Usamos load() para cargar todo el árbol de datos a la memoria de forma segura
@@ -40,7 +40,7 @@ class ActaResource extends Resource
                 // SECCIÓN 1: DATOS DEL FUNCIONARIO SOLICITANTE
                 Forms\Components\Section::make('Datos Del Funcionario Solicitante')
                     ->schema([
-                        Forms\Components\Grid::make(3)
+                        Forms\Components\Grid::make(4) // Cambié a 4 para que quede simétrico
                             ->schema([
                                 Forms\Components\Placeholder::make('sol_nombre')
                                     ->label('Apellidos y Nombres:')
@@ -48,53 +48,46 @@ class ActaResource extends Resource
                                     ->extraAttributes(['class' => 'font-semibold text-primary-600']),
                                 
                                 Forms\Components\Placeholder::make('sol_ci')
-                                    ->label('Nro. Documento de Identidad:')
+                                    ->label('Nro. Documento:')
                                     ->content($solicitante?->ci ?? 'N/D'),
                                 
-                                Forms\Components\Placeholder::make('sol_gerencia')
-                                    ->label('Gerencia:')
-                                    ->content($solicitante?->gerencia ?? 'N/D'),
+                                // ELIMINAMOS sol_gerencia y CONFIGURAMOS sol_item
+                                Forms\Components\Placeholder::make('sol_item')
+                                    ->label('Nro. Ítem:')
+                                    ->content($solicitante?->numero_item ?? 'N/D')
+                                    ->extraAttributes(['class' => 'text-info-600 font-medium']),
                                 
                                 Forms\Components\Placeholder::make('sol_oficina')
                                     ->label('Oficina:')
-                                    // Viaje de 3 pasos basado en tu esquema ER
                                     ->content($solicitante?->oficinaCargo?->oficina?->descripcion ?? 'N/D'),
 
                                 Forms\Components\Placeholder::make('sol_cargo')
                                     ->label('Cargo:')
-                                    // Viaje de 3 pasos basado en tu esquema ER
-                                    ->content($solicitante?->oficinaCargo?->cargo?->descripcion ?? 'N/D'),
-                                
-                                Forms\Components\Placeholder::make('sol_item')
-                                    ->label('Item:')
-                                    ->content('N/D'),
+                                    ->content($solicitante?->oficinaCargo?->cargo?->descripcion ?? 'N/D')
+                                    ->columnSpan(4), // Que ocupe toda la fila inferior para que no se corte si es largo
                             ]),
                     ]),
 
                 // SECCIÓN 2: DATOS DEL FUNCIONARIO RECEPTOR
                 Forms\Components\Section::make('Datos Del Funcionario Receptor')
                     ->schema([
-                Forms\Components\Select::make('id_responsables')
+                        Forms\Components\Select::make('id_responsables')
                             ->label('Búsqueda Apellidos y Nombres')
                             ->relationship(
                                 name: 'responsable', 
                                 titleAttribute: 'nombre_apellido',
                                 modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query) {
                                     
-                                    // 1. Buscamos a TODOS los usuarios 'admin' y extraemos solo sus números de responsable_id
-                                    // Esto nos dará un arreglo limpio, por ejemplo: [2]
                                     $adminIds = \App\Models\User::where('rol', 'admin')
                                         ->whereNotNull('responsable_id')
                                         ->pluck('responsable_id')
                                         ->toArray();
 
-                                    // 2. Si el usuario actual (tú) no está en esa lista, lo agregamos para también ocultarte
                                     $miId = \Illuminate\Support\Facades\Auth::user()?->responsable_id;
                                     if ($miId && !in_array($miId, $adminIds)) {
                                         $adminIds[] = $miId;
                                     }
 
-                                    // 3. Aplicamos el filtro definitivo: ¡Que no traiga a nadie que esté en esta lista de excluidos!
                                     if (!empty($adminIds)) {
                                         $query->whereNotIn('idresponsables', $adminIds);
                                     }
@@ -103,24 +96,25 @@ class ActaResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->live(),
+                            ->live(), // Hace que se recarguen los datos de abajo al elegir a la persona
 
-                        Forms\Components\Grid::make(3)
+                        Forms\Components\Grid::make(4) // Cambié a 4 columnas
                             ->schema([
-                                
                                 Forms\Components\Placeholder::make('rec_ci')
-                                    ->label('Nro. Documento de Identidad:')
+                                    ->label('Nro. Documento:')
                                     ->content(function (Get $get) {
                                         if (!$get('id_responsables')) return '--';
                                         return Responsable::find($get('id_responsables'))?->ci ?? 'N/D';
                                     }),
                                 
-                                Forms\Components\Placeholder::make('rec_gerencia')
-                                    ->label('Gerencia:')
+                                // NUEVO: Extraemos el número de ítem del receptor de forma dinámica
+                                Forms\Components\Placeholder::make('rec_item')
+                                    ->label('Nro. Ítem:')
                                     ->content(function (Get $get) {
                                         if (!$get('id_responsables')) return '--';
-                                        return Responsable::find($get('id_responsables'))?->gerencia ?? 'N/D';
-                                    }),
+                                        return Responsable::find($get('id_responsables'))?->numero_item ?? 'N/D';
+                                    })
+                                    ->extraAttributes(['class' => 'text-info-600 font-medium']),
                                 
                                 Forms\Components\Placeholder::make('rec_oficina')
                                     ->label('Oficina:')
@@ -136,22 +130,51 @@ class ActaResource extends Resource
                                         if (!$get('id_responsables')) return '--';
                                         $receptor = Responsable::with('oficinaCargo.cargo')->find($get('id_responsables'));
                                         return $receptor?->oficinaCargo?->cargo?->descripcion ?? 'N/D';
-                                    }),
+                                    })
+                                    ->columnSpan(4), // Igual que arriba, que el cargo tenga su propio espacio si es largo
                             ]),
                     ]),
 
                 // SECCIÓN 3: SOLICITUD DE TRANSFERENCIA
                 Forms\Components\Section::make('Solicitud De Transferencia')
                     ->schema([
-                        Forms\Components\Grid::make(3)
+                        
+                    Forms\Components\Grid::make(3)
                             ->schema([
-                                Forms\Components\Hidden::make('tipo')->default('TRANSFERENCIA INTERNA'),
-                                Forms\Components\Placeholder::make('tipo_transf')
+                    
+                            Forms\Components\Hidden::make('tipo')->default('TRANSFERENCIA INTERNA'),
+                    
+                            Forms\Components\Placeholder::make('tipo_transf')
                                     ->label('Tipo Transferencia:')->content('TRANSFERENCIA INTERNA'),
-                                Forms\Components\TextInput::make('numero_acta')
-                                    ->label('Número de Acta')->placeholder('Ej: TRANS-001/2026')
-                                    ->required()->unique(ignoreRecord: true),
-                                Forms\Components\DatePicker::make('created_at')
+                    
+Forms\Components\TextInput::make('numero_acta')
+                        ->label('Número de Acta')
+                        ->default(function () {
+                            $añoActual = date('Y');
+                            
+                            // 1. Buscamos usando el guion en lugar de la barra
+                            $ultimaActa = \App\Models\Acta::where('tipo', 'TRANSFERENCIA INTERNA')
+                                ->where('numero_acta', 'like', "%-{$añoActual}")
+                                ->orderBy('created_at', 'desc')
+                                ->first();
+
+                            $siguienteNumero = 1;
+
+                            // 2. Ajustamos la expresión regular para buscar entre dos guiones (Ej: TRANS-001-2026)
+                            if ($ultimaActa && preg_match('/-(\d+)-/', $ultimaActa->numero_acta, $coincidencias)) {
+                                $siguienteNumero = (int) $coincidencias[1] + 1;
+                            }
+
+                            // 3. Armamos el formato final usando un guion antes del año
+                            return 'TRANS-' . str_pad($siguienteNumero, 3, '0', STR_PAD_LEFT) . '-' . $añoActual;
+                        })
+                        ->readOnly() 
+                        ->dehydrated() 
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->extraInputAttributes(['style' => 'font-weight: bold; color: #0284c7; background-color: #f0f9ff;']),             
+                        
+                        Forms\Components\DatePicker::make('created_at')
                                     ->label('Fecha de la solicitud:')->default(now())
                                     ->displayFormat('d/m/Y')->disabled()->dehydrated(),
                             ]),
@@ -172,6 +195,7 @@ class ActaResource extends Resource
                                         modifyQueryUsing: fn (Builder $query) => $query->where('estado', 'DISPONIBLE')
                                     )
                                     ->searchable(['codigo', 'descripcion'])
+                                    ->preload()
                                     ->getOptionLabelFromRecordUsing(fn ($record) => "[{$record->codigo}] - {$record->descripcion}")
                                     ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                     ->required()->columnSpan(2),
@@ -182,35 +206,33 @@ class ActaResource extends Resource
                                     ->required()->columnSpan(1),
                             ])
                             ->columns(3)->addActionLabel('Agregar Activo')->reorderable(false)
-                            ->itemLabel(fn (array $state): ?string => $state['id_bienes'] ?? 'Nuevo Ítem'),
+ 
                     ]),
             ]);
     }
 
+    // Actualizado para limpiar y llenar la variable correcta (rec_item en vez de rec_gerencia)
     protected static function autollenarReceptor(Set $set, $state): void
     {
         if (!$state) {
-            $set('rec_ci', '--'); $set('rec_gerencia', '--'); $set('rec_oficina', '--'); $set('rec_cargo', '--');
+            $set('rec_ci', '--'); $set('rec_item', '--'); $set('rec_oficina', '--'); $set('rec_cargo', '--');
             return;
         }
 
-        // Cargamos al responsable seleccionado incluyendo las sub-relaciones
         $receptor = Responsable::with(['oficinaCargo.oficina', 'oficinaCargo.cargo'])->find($state);
 
         if ($receptor) {
             $set('rec_ci', $receptor->ci ?? 'N/D');
-            $set('rec_gerencia', $receptor->gerencia ?? 'N/D');
-            // Navegamos por el diagrama ER exacto
+            $set('rec_item', $receptor->numero_item ?? 'N/D');
             $set('rec_oficina', $receptor->oficinaCargo?->oficina?->descripcion ?? 'N/D');
             $set('rec_cargo', $receptor->oficinaCargo?->cargo?->descripcion ?? 'N/D');
         }
     }
 
-public static function table(Table $table): Table
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                // 1. LA COLUMNA DE BÚSQUEDA
                 Tables\Columns\TextColumn::make('numero_acta')
                     ->label('Nro. de Acta')
                     ->searchable() 
@@ -220,7 +242,7 @@ public static function table(Table $table): Table
 
                 Tables\Columns\TextColumn::make('tipo')
                     ->label('Tipo de Acta')
-                    ->badge() // Lo hace ver como una etiqueta de color
+                    ->badge() 
                     ->color(fn (string $state): string => match ($state) {
                         'DEVOLUCION' => 'danger',
                         'TRANSFERENCIA INTERNA' => 'warning',
@@ -229,7 +251,7 @@ public static function table(Table $table): Table
 
                 Tables\Columns\TextColumn::make('responsable.nombre_apellido')
                     ->label('Funcionario Involucrado')
-                    ->searchable(), // También podrás buscar por nombre de la persona
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de Emisión')
@@ -237,23 +259,20 @@ public static function table(Table $table): Table
                     ->sortable(),
             ])
             ->filters([
-                // Aquí puedes agregar filtros por fecha si lo deseas en el futuro
+                //
             ])
             ->actions([
-                // Solo dejamos el botón de ver, NO el de editar (las actas legales no se editan)
                 Tables\Actions\ViewAction::make(),
                 
-                // 2. EL BOTÓN DE IMPRIMIR RE-EDICIÓN
                 Tables\Actions\Action::make('imprimir')
                     ->label('Imprimir PDF')
                     ->icon('heroicon-o-printer')
                     ->color('danger')
-                    ->button() // Lo hace ver como un botón sólido
-
+                    ->button()
                     ->url(fn (\App\Models\Acta $record) => route('acta.imprimir', $record))
-                    ->openUrlInNewTab(), // Que no cierre el sistema al imprimir
+                    ->openUrlInNewTab(),
             ])
-            ->defaultSort('created_at', 'desc'); // Muestra las más recientes primero
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getEloquentQuery(): Builder
@@ -267,13 +286,11 @@ public static function table(Table $table): Table
         }
         return $query;
     }
-    // Esta función decide si la pestaña aparece en el menú lateral
+
     public static function canViewAny(): bool
     {
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        
-        // Solo retorna "true" (mostrar) si el usuario es administrador
         return $user && $user->rol === 'admin';
     }
 

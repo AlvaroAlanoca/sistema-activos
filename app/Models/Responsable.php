@@ -9,7 +9,7 @@ class Responsable extends Model {
     protected $fillable = ['nombre_apellido', 
     'id_oficinas_cargos',
     'ci',
-    'gerencia'];
+    'numero_item'];
 
     public function oficinaCargo() {
     return $this->belongsTo(OficinaCargo::class, 'id_oficinas_cargos', 'idoficinas_cargos');

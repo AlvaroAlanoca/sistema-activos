@@ -12,9 +12,10 @@ class CreateRubro extends CreateRecord
         protected function getFormActions(): array
     {
         return [
-            $this->getCreateFormAction(), // Botón de Crear principal
-            $this->getCancelFormAction(), // Botón de Cancelar
-            // Al no incluir getCreateAnotherFormAction(), el botón desaparece
+            $this->getCreateFormAction(),
+            $this->getCreateAnotherFormAction(),
+            $this->getCancelFormAction(),
+             
         ];
     }
     protected function getCreatedNotification(): ?\Filament\Notifications\Notification

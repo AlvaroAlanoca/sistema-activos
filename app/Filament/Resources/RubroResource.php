@@ -31,14 +31,14 @@ public static function form(Form $form): Form
                 ->icon('heroicon-o-rectangle-group')
                 ->schema([
                     
-                    // El nuevo campo que me pediste agregar
+
                     \Filament\Forms\Components\TextInput::make('codigo_rubro')
                         ->label('Código de Rubro')
-                        ->placeholder('Ej: RUB-01')
+                        ->placeholder('Ej: 01')
                         ->required()
-                        ->unique(ignoreRecord: true), // Evita que registres el mismo código dos veces
+                        ->unique(ignoreRecord: true), 
 
-                    // Tu campo original de clasificador
+                    // campo original de clasificador
                     \Filament\Forms\Components\TextInput::make('clasificador_presupuestario')
                         ->label('Clasificador Presupuestario')
                         ->placeholder('Ej: 49100')
@@ -54,25 +54,46 @@ public static function form(Form $form): Form
         ]);
     }
 
-    public static function table(Table $table): Table
+   public static function table(Table $table): Table
     {
         return $table
             ->columns([
-            Tables\Columns\TextColumn::make('descripcion')->label('Descripción')->searchable(),
-            Tables\Columns\TextColumn::make('clasificador_presupuestario')->label('Clasificador')->searchable(),
-            
+                // 1. Código del Rubro
+                Tables\Columns\TextColumn::make('codigo_rubro')
+                    ->label('Código')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->color('primary'),
+
+                // 2. Clasificador Presupuestario
+                Tables\Columns\TextColumn::make('clasificador_presupuestario')
+                    ->label('Clasificador Presupuestaria')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('success'),
+
+                // 3. Descripción
+                Tables\Columns\TextColumn::make('descripcion')
+                    ->label('Descripción del Rubro')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap(),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(), // Botón de eliminar individual
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('codigo_rubro', 'asc'); // Ordena por código automáticamente
     }
 
     public static function getRelations(): array

@@ -3,34 +3,44 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CargoResource\Pages;
-use App\Filament\Resources\CargoResource\RelationManagers;
 use App\Models\Cargo;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 
 class CargoResource extends Resource
 {
     protected static ?string $model = Cargo::class;
-    protected static ?string $navigationGroup = 'Administración de Personal';
-    protected static ?int $navigationSort = 2;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    // Lo mantenemos en el mismo grupo de personal
+    protected static ?string $navigationGroup = 'Administración de Personal';
+    protected static ?int $navigationSort = 2; // Arriba de las oficinas y asignaciones
+
+    // Textos limpios para la interfaz
+    protected static ?string $modelLabel = 'Cargo';
+    protected static ?string $pluralModelLabel = 'Cargos';
+    protected static ?string $navigationLabel = 'Cargos';
+
+    // Usamos un icono de "identificación/gafete" que va perfecto con los puestos de trabajo
+    protected static ?string $navigationIcon = 'heroicon-o-identification';
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Card::make()->schema([
-                Forms\Components\TextInput::make('descripcion')
-                    ->label('Nombre del Cargo')
-                    ->required()
-                    ->maxLength(255),
-            ])
+            Forms\Components\Section::make('Detalles del Cargo')
+                ->description('Registre el nombre del puesto de trabajo según el manual de funciones.')
+                ->icon('heroicon-o-briefcase')
+                ->schema([
+                    Forms\Components\TextInput::make('descripcion')
+                        ->label('Denominación del Cargo')
+                        ->placeholder('Ej: Director General, Auditor Interno, Encargado de Activos...')
+                        ->required()
+                        ->maxLength(255)
+                        ->columnSpanFull(), // Ocupa todo el ancho
+                ]),
         ]);
     }
 
@@ -38,29 +48,37 @@ class CargoResource extends Resource
     {
         return $table
             ->columns([
-               Tables\Columns\TextColumn::make('idcargos')->label('ID'),
-            Tables\Columns\TextColumn::make('descripcion')->label('Cargo')->searchable(),
+                Tables\Columns\TextColumn::make('descripcion')
+                    ->label('Cargo / Puesto de Trabajo')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold') 
+                    ->color('black'), 
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(), // Botón individual de borrar
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('descripcion', 'asc'); // Orden alfabético por defecto
     }
+
     public static function canViewAny(): bool
     {
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         
-        // Solo retorna "true" (mostrar) si el usuario es administrador
+        // Solo los administradores gestionan los cargos
         return $user && $user->rol === 'admin';
     }
+
     public static function getRelations(): array
     {
         return [
