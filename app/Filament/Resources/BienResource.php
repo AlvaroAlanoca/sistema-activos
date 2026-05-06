@@ -174,7 +174,7 @@ class BienResource extends Resource
                     ->modalHeading('Formulario de Transferencia Interna')
                     ->modalWidth('5xl')
                     ->form([
-                        // ... (Tu formulario de transferencia exacto como lo tenías) ...
+
                         \Filament\Forms\Components\Section::make('Sus Datos (Funcionario que Transfiere)')
                             ->schema([
                                 \Filament\Forms\Components\Grid::make(3)

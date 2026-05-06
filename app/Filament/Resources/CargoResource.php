@@ -24,7 +24,7 @@ class CargoResource extends Resource
     protected static ?string $pluralModelLabel = 'Cargos';
     protected static ?string $navigationLabel = 'Cargos';
 
-    // Usamos un icono de "identificación/gafete" que va perfecto con los puestos de trabajo
+
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 
     public static function form(Form $form): Form

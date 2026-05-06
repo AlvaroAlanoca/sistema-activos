@@ -39,7 +39,7 @@ class User extends Authenticatable
             return $this->responsable->nombre_apellido . ' (Funcionario)';
         }
         
-        // Si es admin, mostramos su nombre normal
+        // Si es admin, muestra su nombre normal
         return $this->name . ' (Administrador)';
     }
     /**
