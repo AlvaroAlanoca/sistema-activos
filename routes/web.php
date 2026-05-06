@@ -14,7 +14,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 |
 */
 
-// Opcional: Redirigir la raíz del sitio directamente al panel de inicio de sesión de SEDUCA
 
 Route::get('/acta/{acta}/imprimir', function (App\Models\Acta $acta) {
     
