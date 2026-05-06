@@ -47,7 +47,7 @@
         </tr>
     </table>
 
-    <!-- SECCIÓN: SOLICITANTE (El que usa el sistema) -->
+    <!-- SECCIÓN: SOLICITANTE  -->
     <div class="section-title">Datos Del Funcionario Solicitante</div>
     <table class="info-table">
         <tr>
@@ -57,8 +57,8 @@
         <tr>
             <td class="label">Nro. Documento:</td>
             <td>{{ $solicitante ? $solicitante->ci : 'N/D' }}</td>
-            <td class="label">Gerencia:</td>
-            <td>{{ $solicitante ? $solicitante->gerencia : 'N/D' }}</td>
+            <td class="label">Nro. Ítem:</td>
+            <td>{{ $solicitante ? $solicitante->numero_item : 'N/D' }}</td>
         </tr>
         <tr>
             <td class="label">Oficina:</td>
@@ -68,7 +68,7 @@
         </tr>
     </table>
 
-    <!-- SECCIÓN: RECEPTOR (Al que se le asigna) -->
+    <!-- SECCIÓN: RECEPTOR  -->
     <div class="section-title">Datos Del Funcionario Receptor</div>
     <table class="info-table">
         <tr>
@@ -78,8 +78,8 @@
         <tr>
             <td class="label">Nro. Documento:</td>
             <td>{{ $receptor ? $receptor->ci : 'N/D' }}</td>
-            <td class="label">Gerencia:</td>
-            <td>{{ $receptor ? $receptor->gerencia : 'N/D' }}</td>
+            <td class="label">Nro. Ítem:</td>
+            <td>{{ $receptor ? $receptor->numero_item : 'N/D' }}</td>
         </tr>
         <tr>
             <td class="label">Oficina:</td>
@@ -118,7 +118,7 @@
         </tbody>
     </table>
 
-    <!-- SECCIÓN: FIRMAS (Con tu lógica dinámica de cargos y roles) -->
+    <!-- SECCIÓN: FIRMAS  -->
     <table class="tabla-firmas">
         <tr>
             <td>
