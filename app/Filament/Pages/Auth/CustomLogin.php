@@ -10,12 +10,12 @@ class CustomLogin extends BaseLogin
     // Cambiamos el título principal
     public function getHeading(): string|Htmlable
     {
-        return 'Sistema de Activos Fijos';
+        return 'SISTEMA DE CONTROL DE BIENES Y SERVICIOS';
     }
 
     // Agregamos un subtítulo profesional
     public function getSubheading(): string|Htmlable|null
     {
-        return 'SEDUCA - Ingrese sus credenciales institucionales';
+        return 'Ingrese sus credenciales institucionales';
     }
 }

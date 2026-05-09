@@ -11,7 +11,8 @@ class Bien extends Model {
         'codigo', 
         'descripcion', 
         'id_tipo_bien',
-        'correlativo'];
+        'correlativo',
+        'costo'];
 
     public function tipoBien() {
         return $this->belongsTo(TipoBien::class, 'id_tipo_bien', 'idtipo_bien');

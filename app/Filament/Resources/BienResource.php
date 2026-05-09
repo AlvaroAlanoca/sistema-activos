@@ -79,7 +79,15 @@ class BienResource extends Resource
                         ->readOnly() // Solo lectura
                         ->dehydrated() // Asegura que se guarde en BD
                         ->extraInputAttributes(['style' => 'font-weight: bold; color: #0284c7; background-color: #f0f9ff;']),
-                ])->columns(3),
+
+                    Forms\Components\TextInput::make('costo')
+                        ->label('Costo de Adquisición')
+                        ->numeric()
+                        ->inputMode('decimal')
+                        ->prefix('Bs.') 
+                        ->maxValue(99999999.99)
+                        ->nullable(),    
+                ])->columns(2),
 
             // SECCIÓN: DETALLES Y ESTADO
             \Filament\Forms\Components\Section::make('Detalles y Estado')
@@ -145,6 +153,11 @@ class BienResource extends Resource
                         'MANTENIMIENTO' => 'warning',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('costo')
+                    ->label('Costo')
+                    ->money('BOB') 
+                    ->sortable()
+                    ->searchable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('estado')
@@ -165,6 +178,7 @@ class BienResource extends Resource
                 Tables\Actions\EditAction::make()
                     ->hidden(fn () => Auth::user()?->rol === 'responsable'),
             ])
+            //  FUNCION DE TRANSEFERIR 
             ->bulkActions([
                 Tables\Actions\BulkAction::make('transferir')
                     ->visible(fn () => Auth::user()?->rol === 'responsable') // Solo para responsables

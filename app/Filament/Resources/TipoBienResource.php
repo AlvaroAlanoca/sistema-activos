@@ -49,6 +49,13 @@ class TipoBienResource extends Resource
                         ->preload()    
                         ->required()
                         ->columnSpan(1),
+                    Forms\Components\TextInput::make('vida_util')
+                        ->label('Vida Útil')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(100)
+                        ->suffix('años')
+                        ->nullable(),
                 ])->columns(2), 
         ]);
     }
@@ -76,6 +83,12 @@ class TipoBienResource extends Resource
                     ->color('gray')
                     ->wrap()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('vida_util')
+                    ->label('Vida Útil')
+                    ->numeric()
+                    ->suffix(' años')
+                    ->sortable()
+                    ->searchable(),
             ])
             ->filters([
                 //
