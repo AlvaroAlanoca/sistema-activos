@@ -6,8 +6,8 @@ use App\Filament\Resources\BienResource\Pages;
 use App\Models\Bien;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Get; // IMPORTANTE: Para la lógica reactiva
-use Filament\Forms\Set; // IMPORTANTE: Para la lógica reactiva
+use Filament\Forms\Get; 
+use Filament\Forms\Set; 
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -27,7 +27,9 @@ class BienResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return Auth::user()?->rol === 'responsable' ? 'Mis Bienes Asignados' : 'Gestión de Bienes';
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        return $user && $user->hasRole('responsable') ? 'Mis Bienes Asignados' : 'Gestión de Bienes';
     }
 
     public static function form(Form $form): Form
@@ -45,7 +47,7 @@ class BienResource extends Resource
                         ->searchable() 
                         ->preload()    
                         ->required()
-                        ->live() // Hace el campo reactivo
+                        ->live() 
                         ->afterStateUpdated(function (Set $set, Get $get, $state) {
                             $tipoBien = \App\Models\TipoBien::with('rubro')->find($state);
                             $codigoRubro = $tipoBien ? $tipoBien->rubro->codigo_rubro : '';
@@ -58,7 +60,7 @@ class BienResource extends Resource
                         ->label('Correlativo')
                         ->numeric()
                         ->required()
-                        ->live(debounce: 500) // Reacciona al terminar de teclear
+                        ->live(debounce: 500) 
                         ->afterStateUpdated(function (Set $set, Get $get, $state) {
                             $idTipoBien = $get('id_tipo_bien');
                             $codigoRubro = '';
@@ -76,8 +78,8 @@ class BienResource extends Resource
                         ->label('Código de Activo Fijo')
                         ->required()
                         ->unique(ignoreRecord: true)
-                        ->readOnly() // Solo lectura
-                        ->dehydrated() // Asegura que se guarde en BD
+                        ->readOnly() 
+                        ->dehydrated() 
                         ->extraInputAttributes(['style' => 'font-weight: bold; color: #0284c7; background-color: #f0f9ff;']),
 
                     Forms\Components\TextInput::make('costo')
@@ -145,7 +147,7 @@ class BienResource extends Resource
 
                 Tables\Columns\TextColumn::make('estado')
                     ->label('Estado')
-                    ->searchable() // Buscador de estado activado
+                    ->searchable() 
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'DISPONIBLE' => 'success',
@@ -158,8 +160,6 @@ class BienResource extends Resource
                     ->money('BOB') 
                     ->sortable()
                     ->searchable(),
-
-                    
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('estado')
@@ -178,19 +178,26 @@ class BienResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->hidden(fn () => Auth::user()?->rol === 'responsable'),
+                    ->hidden(function () {
+                        /** @var \App\Models\User|null $user */
+                        $user = Auth::user();
+                        return $user && $user->hasRole('responsable');
+                    }),
             ])
-            //  FUNCION DE TRANSEFERIR 
+            // FUNCION DE TRANSFERIR (Acción Masiva)
             ->bulkActions([
                 Tables\Actions\BulkAction::make('transferir')
-                    ->visible(fn () => Auth::user()?->rol === 'responsable') // Solo para responsables
+                    ->visible(function () {
+                        /** @var \App\Models\User|null $user */
+                        $user = Auth::user();
+                        return $user && $user->hasRole('responsable');
+                    })
                     ->label('Transferir Bienes')
                     ->icon('heroicon-o-arrows-right-left')
                     ->color('warning')
                     ->modalHeading('Formulario de Transferencia Interna')
                     ->modalWidth('5xl')
                     ->form([
-
                         \Filament\Forms\Components\Section::make('Sus Datos (Funcionario que Transfiere)')
                             ->schema([
                                 \Filament\Forms\Components\Grid::make(3)
@@ -215,7 +222,10 @@ class BienResource extends Resource
                                 \Filament\Forms\Components\Select::make('id_receptor')
                                     ->label('Buscar Funcionario (Apellidos y Nombres)')
                                     ->options(function () {
-                                        $adminIds = \App\Models\User::where('rol', 'admin')
+                                        // NUEVO: Buscar admins con Spatie para excluirlos
+                                        $adminIds = \App\Models\User::whereHas('roles', function($q) {
+                                                $q->whereIn('name', ['admin', 'super_admin']);
+                                            })
                                             ->whereNotNull('responsable_id')
                                             ->pluck('responsable_id')
                                             ->toArray();
@@ -308,9 +318,11 @@ class BienResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        if ($user && $user->rol === 'responsable') {
+        // Filtramos para que el responsable solo vea sus bienes, ignorando al super_admin y admin
+        if ($user && $user->hasRole('responsable') && !$user->hasRole('super_admin') && !$user->hasRole('admin')) {
             $query->whereIn('idbienes', function ($subquery) use ($user) {
                 $subquery->select('ai.id_bienes')
                          ->from('acta_items as ai')
@@ -322,16 +334,6 @@ class BienResource extends Resource
         }
 
         return $query;
-    }
-
-    public static function canCreate(): bool
-    {
-        return Auth::user()?->rol === 'admin';
-    }
-
-    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
-    {
-        return Auth::user()?->rol === 'admin';
     }
 
     public static function getPages(): array

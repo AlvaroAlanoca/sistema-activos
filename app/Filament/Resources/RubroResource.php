@@ -107,14 +107,7 @@ public static function form(Form $form): Form
             //
         ];
     }
-                public static function canViewAny(): bool
-    {
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
-        
-        // Solo retorna "true" (mostrar) si el usuario es administrador
-        return $user && $user->rol === 'admin';
-    }
+                
 
     public static function getPages(): array
     {

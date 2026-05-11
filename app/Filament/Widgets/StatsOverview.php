@@ -31,9 +31,10 @@ class StatsOverview extends BaseWidget
         // Esta función oculta el widget si el usuario no es admin
     public static function canView(): bool
     {
-        /** @var \App\Models\User|null $user */
+         /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        
-        return $user && $user->rol === 'admin';
+
+        return $user && $user->hasAnyRole(['admin', 'super_admin']);
     }
+
 }

@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Spatie\Permission\Traits\HasRoles; 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -23,25 +22,31 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'rol',
         'responsable_id'
-
     ];
-    public function responsable()
+
+    /**
+     * Relación con la tabla Responsables
+     */
+    public function responsable(): BelongsTo
     {
-        // El orden es: Modelo, Mi llave foránea, La llave primaria del otro
         return $this->belongsTo(Responsable::class, 'responsable_id', 'idresponsables');
     }
+
+    /**
+     * Nombre a mostrar en la interfaz de Filament
+     */
     public function getFilamentName(): string
     {
-        // Si es responsable y tiene una ficha vinculada, mostramos ese nombre
-        if ($this->rol === 'responsable' && $this->responsable) {
+        // NUEVA LÓGICA: Usamos hasRole() de Spatie
+        if ($this->hasRole('responsable') && $this->responsable) {
             return $this->responsable->nombre_apellido . ' (Funcionario)';
         }
         
-        // Si es admin, muestra su nombre normal
+        // Si no es responsable (ej. super_admin o admin)
         return $this->name . ' (Administrador)';
     }
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -64,13 +69,5 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public function isAdmin(): bool
-    {
-        return $this->rol === 'admin';
-    }
 
-    public function isResponsable(): bool
-    {
-        return $this->rol === 'responsable';
-    }
 }

@@ -18,6 +18,7 @@ class BotonesResponsableWidget extends Widget
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         
-        return $user && $user->rol === 'responsable';
+
+        return $user && $user->hasRole('responsable') && !$user->hasRole('super_admin') && !$user->hasRole('admin');
     }
 }

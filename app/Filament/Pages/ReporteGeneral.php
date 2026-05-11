@@ -12,16 +12,16 @@ use Filament\Forms\Components\Grid;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ReporteBienesExport;
 use Barryvdh\DomPDF\Facade\Pdf;
-
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 class ReporteGeneral extends Page implements HasForms
 {
     use InteractsWithForms;
-
+    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
     protected static ?string $navigationLabel = 'Reporte General';
     protected static ?string $title = 'Reporte General de Bienes';
     protected static string $view = 'filament.pages.reporte-general';
-        protected static ?string $navigationGroup = 'Reportes';
+    protected static ?string $navigationGroup = 'Reportes';
     protected static ?int $navigationSort = 1;
 
     public ?array $data = [];

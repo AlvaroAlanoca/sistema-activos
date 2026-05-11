@@ -17,11 +17,13 @@ use App\Models\Bien;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ReporteBienesExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 // Es obligatorio implementar HasForms para tener el formulario en la vista principal
 class BusquedaEspecifica extends Page implements HasForms
 {
     use InteractsWithForms;
+    use HasPageShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass-circle';
     protected static ?string $navigationLabel = 'Búsqueda Específica';

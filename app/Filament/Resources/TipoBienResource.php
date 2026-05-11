@@ -100,14 +100,7 @@ class TipoBienResource extends Resource
         ];
     }
 
-    public static function canViewAny(): bool
-    {
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
-        
 
-        return $user && $user->rol === 'admin';
-    }
 
     public static function getPages(): array
     {

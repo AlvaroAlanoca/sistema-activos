@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use Filament\Http\Middleware\Authenticate;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -28,6 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(\App\Filament\Pages\Auth\CustomLogin::class)
             ->brandName('Control de Activos Fijos - SEDUCA')
+
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
             <div style="display: flex; align-items: center; gap: 12px;">
                 <img src="' . asset('img/logo.png') . '" alt="Escudo SEDUCA" style="height: 3rem;">
@@ -41,11 +43,15 @@ class AdminPanelProvider extends PanelProvider
             'primary' => \Filament\Support\Colors\Color::Blue,
             'gray' => \Filament\Support\Colors\Color::Slate,            
             ])
+                        ->plugins([
+            \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
+        ])
             ->navigationGroups([
     'Transacciones',
     'Reportes',
     'Gestión de Inventario',
     'Administración de Personal',
+    'Filament Shield',
 ])
             ->sidebarCollapsibleOnDesktop()            
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -93,6 +99,9 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,

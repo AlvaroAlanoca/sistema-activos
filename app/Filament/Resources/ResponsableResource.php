@@ -226,12 +226,7 @@ class ResponsableResource extends Resource
             ->defaultSort('nombre_apellido', 'asc'); // Siempre es bueno ordenar por nombre por defecto
     }
 
-    public static function canViewAny(): bool
-    {
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
-        return $user && $user->rol === 'admin';
-    }
+
 
     public static function getRelations(): array
     {

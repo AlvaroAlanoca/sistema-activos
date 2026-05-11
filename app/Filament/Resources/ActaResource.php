@@ -13,7 +13,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class ActaResource extends Resource
@@ -27,7 +26,7 @@ class ActaResource extends Resource
     public static function form(Form $form): Form
     {
         /** @var \App\Models\User|null $user */
-        $user = \Illuminate\Support\Facades\Auth::user();
+        $user = Auth::user();
         
         // Usamos load() para cargar todo el árbol de datos a la memoria de forma segura
         $user?->load(['responsable.oficinaCargo.oficina', 'responsable.oficinaCargo.cargo']);
@@ -40,7 +39,7 @@ class ActaResource extends Resource
                 // SECCIÓN 1: DATOS DEL FUNCIONARIO SOLICITANTE
                 Forms\Components\Section::make('Datos Del Funcionario Solicitante')
                     ->schema([
-                        Forms\Components\Grid::make(4) // Cambié a 4 para que quede simétrico
+                        Forms\Components\Grid::make(4) 
                             ->schema([
                                 Forms\Components\Placeholder::make('sol_nombre')
                                     ->label('Apellidos y Nombres:')
@@ -51,7 +50,6 @@ class ActaResource extends Resource
                                     ->label('Nro. Documento:')
                                     ->content($solicitante?->ci ?? 'N/D'),
                                 
-                                // ELIMINAMOS sol_gerencia y CONFIGURAMOS sol_item
                                 Forms\Components\Placeholder::make('sol_item')
                                     ->label('Nro. Ítem:')
                                     ->content($solicitante?->numero_item ?? 'N/D')
@@ -64,7 +62,7 @@ class ActaResource extends Resource
                                 Forms\Components\Placeholder::make('sol_cargo')
                                     ->label('Cargo:')
                                     ->content($solicitante?->oficinaCargo?->cargo?->descripcion ?? 'N/D')
-                                    ->columnSpan(4), // Que ocupe toda la fila inferior para que no se corte si es largo
+                                    ->columnSpan(4), 
                             ]),
                     ]),
 
@@ -76,14 +74,19 @@ class ActaResource extends Resource
                             ->relationship(
                                 name: 'responsable', 
                                 titleAttribute: 'nombre_apellido',
-                                modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query) {
+                                modifyQueryUsing: function (Builder $query) {
                                     
-                                    $adminIds = \App\Models\User::where('rol', 'admin')
+                                    // NUEVO FILTRO: Excluir administradores usando Spatie
+                                    $adminIds = \App\Models\User::whereHas('roles', function($q) {
+                                            $q->whereIn('name', ['admin', 'super_admin']);
+                                        })
                                         ->whereNotNull('responsable_id')
                                         ->pluck('responsable_id')
                                         ->toArray();
 
-                                    $miId = \Illuminate\Support\Facades\Auth::user()?->responsable_id;
+                                    $miId = Auth::user()?->responsable_id;
+                                    
+                                    // Evitamos que el responsable se transfiera a sí mismo
                                     if ($miId && !in_array($miId, $adminIds)) {
                                         $adminIds[] = $miId;
                                     }
@@ -96,9 +99,9 @@ class ActaResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->live(), // Hace que se recarguen los datos de abajo al elegir a la persona
+                            ->live(), 
 
-                        Forms\Components\Grid::make(4) // Cambié a 4 columnas
+                        Forms\Components\Grid::make(4) 
                             ->schema([
                                 Forms\Components\Placeholder::make('rec_ci')
                                     ->label('Nro. Documento:')
@@ -107,7 +110,6 @@ class ActaResource extends Resource
                                         return Responsable::find($get('id_responsables'))?->ci ?? 'N/D';
                                     }),
                                 
-                                // NUEVO: Extraemos el número de ítem del receptor de forma dinámica
                                 Forms\Components\Placeholder::make('rec_item')
                                     ->label('Nro. Ítem:')
                                     ->content(function (Get $get) {
@@ -131,50 +133,45 @@ class ActaResource extends Resource
                                         $receptor = Responsable::with('oficinaCargo.cargo')->find($get('id_responsables'));
                                         return $receptor?->oficinaCargo?->cargo?->descripcion ?? 'N/D';
                                     })
-                                    ->columnSpan(4), // Igual que arriba, que el cargo tenga su propio espacio si es largo
+                                    ->columnSpan(4), 
                             ]),
                     ]),
 
                 // SECCIÓN 3: SOLICITUD DE TRANSFERENCIA
                 Forms\Components\Section::make('Solicitud De Transferencia')
                     ->schema([
-                        
-                    Forms\Components\Grid::make(3)
+                        Forms\Components\Grid::make(3)
                             ->schema([
-                    
-                            Forms\Components\Hidden::make('tipo')->default('TRANSFERENCIA INTERNA'),
-                    
-                            Forms\Components\Placeholder::make('tipo_transf')
-                                    ->label('Tipo Transferencia:')->content('TRANSFERENCIA INTERNA'),
-                    
-Forms\Components\TextInput::make('numero_acta')
-                        ->label('Número de Acta')
-                        ->default(function () {
-                            $añoActual = date('Y');
-                            
-                            // 1. Buscamos usando el guion en lugar de la barra
-                            $ultimaActa = \App\Models\Acta::where('tipo', 'TRANSFERENCIA INTERNA')
-                                ->where('numero_acta', 'like', "%-{$añoActual}")
-                                ->orderBy('created_at', 'desc')
-                                ->first();
-
-                            $siguienteNumero = 1;
-
-                            // 2. Ajustamos la expresión regular para buscar entre dos guiones (Ej: TRANS-001-2026)
-                            if ($ultimaActa && preg_match('/-(\d+)-/', $ultimaActa->numero_acta, $coincidencias)) {
-                                $siguienteNumero = (int) $coincidencias[1] + 1;
-                            }
-
-                            // 3. Armamos el formato final usando un guion antes del año
-                            return 'TRANS-' . str_pad($siguienteNumero, 3, '0', STR_PAD_LEFT) . '-' . $añoActual;
-                        })
-                        ->readOnly() 
-                        ->dehydrated() 
-                        ->required()
-                        ->unique(ignoreRecord: true)
-                        ->extraInputAttributes(['style' => 'font-weight: bold; color: #0284c7; background-color: #f0f9ff;']),             
+                                Forms\Components\Hidden::make('tipo')->default('TRANSFERENCIA INTERNA'),
                         
-                        Forms\Components\DatePicker::make('created_at')
+                                Forms\Components\Placeholder::make('tipo_transf')
+                                    ->label('Tipo Transferencia:')->content('TRANSFERENCIA INTERNA'),
+                        
+                                Forms\Components\TextInput::make('numero_acta')
+                                    ->label('Número de Acta')
+                                    ->default(function () {
+                                        $añoActual = date('Y');
+                                        
+                                        $ultimaActa = Acta::where('tipo', 'TRANSFERENCIA INTERNA')
+                                            ->where('numero_acta', 'like', "%-{$añoActual}")
+                                            ->orderBy('created_at', 'desc')
+                                            ->first();
+
+                                        $siguienteNumero = 1;
+
+                                        if ($ultimaActa && preg_match('/-(\d+)-/', $ultimaActa->numero_acta, $coincidencias)) {
+                                            $siguienteNumero = (int) $coincidencias[1] + 1;
+                                        }
+
+                                        return 'TRANS-' . str_pad($siguienteNumero, 3, '0', STR_PAD_LEFT) . '-' . $añoActual;
+                                    })
+                                    ->readOnly() 
+                                    ->dehydrated() 
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->extraInputAttributes(['style' => 'font-weight: bold; color: #0284c7; background-color: #f0f9ff;']),             
+                                
+                                Forms\Components\DatePicker::make('created_at')
                                     ->label('Fecha de la solicitud:')->default(now())
                                     ->displayFormat('d/m/Y')->disabled()->dehydrated(),
                             ]),
@@ -192,7 +189,16 @@ Forms\Components\TextInput::make('numero_acta')
                                     ->relationship(
                                         name: 'bien', 
                                         titleAttribute: 'descripcion',
-                                        modifyQueryUsing: fn (Builder $query) => $query->where('estado', 'DISPONIBLE')
+                                        modifyQueryUsing: function (Builder $query) {
+                                            $query->where('estado', 'DISPONIBLE');
+                                            
+                                             /** @var \App\Models\User $user */
+                                            $user = Auth::user();
+                                            if ($user && $user->hasRole('responsable')) {
+                                                // Asegúrate de que la columna se llame 'id_responsable' en la base de datos de bienes
+                                                $query->where('id_responsable', $user->responsable_id);
+                                            }
+                                        }
                                     )
                                     ->searchable(['codigo', 'descripcion'])
                                     ->preload()
@@ -206,12 +212,10 @@ Forms\Components\TextInput::make('numero_acta')
                                     ->required()->columnSpan(1),
                             ])
                             ->columns(3)->addActionLabel('Agregar Activo')->reorderable(false)
- 
                     ]),
             ]);
     }
 
-    // Actualizado para limpiar y llenar la variable correcta (rec_item en vez de rec_gerencia)
     protected static function autollenarReceptor(Set $set, $state): void
     {
         if (!$state) {
@@ -269,29 +273,37 @@ Forms\Components\TextInput::make('numero_acta')
                     ->icon('heroicon-o-printer')
                     ->color('danger')
                     ->button()
-                    ->url(fn (\App\Models\Acta $record) => route('acta.imprimir', $record))
+                    ->url(fn (Acta $record) => route('acta.imprimir', $record))
                     ->openUrlInNewTab(),
             ])
             ->defaultSort('created_at', 'desc');
     }
 
+    // NUEVO: Filtro automático de la tabla principal
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        if ($user && $user->rol === 'responsable') {
+        // Si el usuario es un responsable (y no es admin), solo puede ver sus propias actas
+        if ($user && $user->hasRole('responsable') && !$user->hasRole('super_admin')) {
             $query->where('id_responsables', $user->responsable_id);
         }
         return $query;
     }
 
-    public static function canViewAny(): bool
+    // Permisos base de Shield
+    public static function getPermissionPrefixes(): array
     {
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
-        return $user && $user->rol === 'admin';
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
     }
 
     public static function getPages(): array

@@ -70,14 +70,7 @@ class CargoResource extends Resource
             ->defaultSort('descripcion', 'asc'); // Orden alfabético por defecto
     }
 
-    public static function canViewAny(): bool
-    {
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
-        
-        // Solo los administradores gestionan los cargos
-        return $user && $user->rol === 'admin';
-    }
+
 
     public static function getRelations(): array
     {
