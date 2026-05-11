@@ -183,6 +183,12 @@ class BienResource extends Resource
                         $user = Auth::user();
                         return $user && $user->hasRole('responsable');
                     }),
+                    Tables\Actions\DeleteAction::make()
+                    ->hidden(function () {
+                        /** @var \App\Models\User|null $user */
+                        $user = Auth::user();
+                    return $user && $user->hasRole('responsable');
+                    }),
             ])
             // FUNCION DE TRANSFERIR (Acción Masiva)
             ->bulkActions([

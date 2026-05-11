@@ -30,7 +30,7 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->label('Nombre Completo')
+                    ->label('Alias')
                     ->required(),
                     
                 Forms\Components\TextInput::make('email')
@@ -38,12 +38,12 @@ class UserResource extends Resource
                     ->email()
                     ->required(),
                     
-Forms\Components\TextInput::make('password')
-    ->label('Contraseña')
-    ->password()
-    ->dehydrateStateUsing(fn ($state) => bcrypt($state))
-    ->dehydrated(fn ($state) => filled($state)) // CRÍTICO: Solo guarda si no está vacío
-    ->required(fn (string $context): bool => $context === 'create'), // CRÍTICO: No es required al editar
+        Forms\Components\TextInput::make('password')
+            ->label('Contraseña')
+            ->password()
+            ->dehydrateStateUsing(fn ($state) => bcrypt($state))
+            ->dehydrated(fn ($state) => filled($state)) 
+            ->required(fn (string $context): bool => $context === 'create'), 
 
                 // 1. EL NUEVO SELECTOR DE ROLES DE SHIELD
                 Forms\Components\Select::make('roles')
@@ -59,6 +59,7 @@ Forms\Components\TextInput::make('password')
                     ->label('Vincular con ficha de Responsable')
                     ->relationship('responsable', 'nombre_apellido')
                     ->searchable()
+                    ->preload()
                     ->visible(function (\Filament\Forms\Get $get) {
                         // Obtenemos los IDs de los roles seleccionados (viene como arreglo)
                         $selectedRoles = $get('roles') ?? [];

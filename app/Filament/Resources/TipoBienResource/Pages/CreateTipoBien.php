@@ -14,4 +14,13 @@ class CreateTipoBien extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+            protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction(),
+            $this->getCreateAnotherFormAction(),
+            $this->getCancelFormAction(),
+             
+        ];
+    }
 }

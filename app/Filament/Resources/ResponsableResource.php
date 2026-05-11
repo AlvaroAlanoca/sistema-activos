@@ -60,13 +60,22 @@ class ResponsableResource extends Resource
                         ->required()
                         ->maxLength(50),
 
-                    Forms\Components\Select::make('id_oficinas_cargos')
-                        ->label('Oficina y Cargo Exacto')
-                        ->relationship('oficinaCargo', 'idoficinas_cargos') 
-                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->oficina->descripcion} - {$record->cargo->descripcion}")
-                        ->searchable()
-                        ->preload()
-                        ->required(),
+                Forms\Components\Select::make('id_oficinas_cargos')
+                    ->label('Oficina y Cargo Exacto')
+                    ->options(function () {
+
+                    return \App\Models\OficinaCargo::with(['oficina', 'cargo'])
+                    ->get()
+
+                    ->sortBy(fn ($record) => $record->oficina->descripcion)
+
+                    ->mapWithKeys(fn ($record) => [
+                    $record->idoficinas_cargos => "{$record->oficina->descripcion} - {$record->cargo->descripcion}"
+            ]);
+    })
+    ->searchable()
+    ->preload()
+    ->required(),
                 ])->columns(2),
         ]);
     }
@@ -93,6 +102,11 @@ class ResponsableResource extends Resource
                     ->badge() // Lo ponemos como etiqueta para diferenciarlo de los números de carnet
                     ->color('info'),
 
+                Tables\Columns\TextColumn::make('oficinaCargo.oficina.descripcion')
+                    ->label('Oficina')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('oficinaCargo.cargo.descripcion')
                     ->label('Cargo')
                     ->searchable()
@@ -123,6 +137,7 @@ class ResponsableResource extends Resource
                         return $bienesReales;
                     })
                     ->badge() 
+                    ->sortable()
                     ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
                     ->formatStateUsing(fn (int $state): string => $state > 0 ? "Tiene {$state} activo(s)" : 'Sin activos asignados'),
             ])

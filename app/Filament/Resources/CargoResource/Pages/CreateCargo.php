@@ -14,7 +14,7 @@ class CreateCargo extends CreateRecord
         return [
             $this->getCreateFormAction(), // Botón de Crear principal
             $this->getCancelFormAction(), // Botón de Cancelar
-            // Al no incluir getCreateAnotherFormAction(), el botón desaparece
+            $this->getCreateAnotherFormAction(),
         ];
     }
     protected function getCreatedNotification(): ?\Filament\Notifications\Notification
