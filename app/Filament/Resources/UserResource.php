@@ -20,7 +20,7 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users'; // Cambié el ícono para que tenga más sentido (usuarios)
     protected static bool $shouldRegisterNavigation = true;
     protected static ?string $navigationLabel = 'Usuarios del Sistema';
-    protected static ?string $navigationGroup = 'Filament Shield';
+    protected static ?string $navigationGroup = 'Seguridad';
     
     // Opcional: puedes meterlo en un grupo si quieres
     // protected static ?string $navigationGroup = 'Administración de Personal';
@@ -83,7 +83,7 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
+                    ->label('Alias')
                     ->searchable()
                     ->sortable(),
                     
