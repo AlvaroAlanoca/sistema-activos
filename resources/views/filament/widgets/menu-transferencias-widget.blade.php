@@ -3,7 +3,7 @@
         <x-slot name="heading">
             <div class="flex items-center gap-2 text-primary-600">
                 <x-heroicon-o-briefcase class="w-6 h-6" />
-                <span>ACTIVA - ACTIVOS FIJOS</span>
+                <span>SISTEMA DE CONTROL DE BIENES Y SERVICIOS</span>
             </div>
         </x-slot>
 

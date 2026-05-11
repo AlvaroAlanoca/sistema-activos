@@ -12,7 +12,9 @@ class Bien extends Model {
         'descripcion', 
         'id_tipo_bien',
         'correlativo',
-        'costo'];
+        'costo',
+        'depreciacion_acumulada',
+        'valor_neto'];
 
     public function tipoBien() {
         return $this->belongsTo(TipoBien::class, 'id_tipo_bien', 'idtipo_bien');

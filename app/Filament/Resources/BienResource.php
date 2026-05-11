@@ -158,6 +158,8 @@ class BienResource extends Resource
                     ->money('BOB') 
                     ->sortable()
                     ->searchable(),
+
+                    
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('estado')

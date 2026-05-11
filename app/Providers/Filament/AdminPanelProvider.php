@@ -43,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
     'Transacciones',
+    'Reportes',
     'Gestión de Inventario',
     'Administración de Personal',
 ])

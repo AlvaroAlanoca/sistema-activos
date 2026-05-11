@@ -9,6 +9,7 @@ class Rubro extends Model {
     protected $fillable = [
         'clasificador_presupuestario', 
         'descripcion',
-        'codigo_rubro'
+        'codigo_rubro',
+        'vida_util'
         ];
 }

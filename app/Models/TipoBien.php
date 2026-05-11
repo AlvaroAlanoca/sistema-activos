@@ -9,7 +9,7 @@ class TipoBien extends Model {
     protected $fillable = [
         'id_rubro', 
         'descripcion',
-        'vida_util'
+
         ];
 
     public function rubro() {

@@ -24,40 +24,6 @@ class Dashboard extends BaseDashboard
      *
      * @return array
      */
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('generar_reporte')
-                ->label('Reporte en Excel')
-                ->icon('heroicon-o-document-arrow-down')
-                ->color('success') // Indicador visual estándar para exportaciones de hojas de cálculo
-                ->form([
-                    DatePicker::make('fecha_inicio')
-                        ->label('Fecha Inicial')
-                        ->nullable(),
-                        
-                    DatePicker::make('fecha_fin')
-                        ->label('Fecha Final')
-                        ->nullable(),
-                        
-                    // Selección del responsable mediante consulta optimizada pluck para el listado
-                    Select::make('responsable_id')
-                        ->label('Funcionario / Responsable')
-                        ->options(Responsable::pluck('nombre_apellido', 'idresponsables'))
-                        ->searchable()
-                        ->preload()
-                        ->nullable(),
-                ])
-                ->action(function (array $data) {
-                    // Instancia la clase exportadora inyectando el array de parámetros validados
-                    // y retorna la respuesta de descarga binaria generada por Laravel-Excel
-                    return Excel::download(
-                        new ReporteBienesExport($data), 
-                        'reporte_bienes_' . date('Ymd_His') . '.xlsx'
-                    );
-                })
-                ->modalHeading('Generar Reporte de Bienes Asignados')
-                ->modalSubmitActionLabel('Descargar Excel'),
-        ];
-    }
+
+    
 }

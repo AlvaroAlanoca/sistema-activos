@@ -7,20 +7,23 @@
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11px; color: #333; }
         .header { background-color: #1e3a8a; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 14px; text-transform: uppercase; }
         .section-title { background-color: #60a5fa; color: white; padding: 5px; font-weight: bold; margin-top: 15px; margin-bottom: 5px; width: max-content; padding-right: 15px; border-radius: 0 10px 10px 0; }
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #bdc3c7; }
-        .info-table td { padding: 5px; border-bottom: 1px solid #ecf0f1; }
-        .label { font-weight: bold; width: 150px; text-align: right; padding-right: 10px; color: #2c3e50; }
+       .info-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #bdc3c7; table-layout: fixed; }
+        .info-table td { padding: 5px; border-bottom: 1px solid #ecf0f1; vertical-align: top; word-wrap: break-word; }
+        /* Se quita el width fijo de aquí para controlarlo con colgroup */
+        .label { font-weight: bold; text-align: right; padding-right: 10px; color: #2c3e50; }
         .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; }
         .items-table th { background-color: #ecf0f1; padding: 8px; border: 1px solid #bdc3c7; font-weight: bold; }
         .items-table td { padding: 8px; border: 1px solid #bdc3c7; text-align: left; }
         
-        /* ESTILOS DE FIRMAS */
-        .tabla-firmas { width: 100%; margin-top: 80px; border-collapse: collapse; border: none; }
-        .tabla-firmas td { width: 45%; text-align: center; vertical-align: top; border: none; }
+/* ESTILOS DE FIRMAS */
+        .tabla-firmas { width: 100%; margin-top: 80px; border-collapse: collapse; border: none; table-layout: fixed; }
+        .tabla-firmas td { width: 45%; text-align: center; vertical-align: top; border: none; padding: 0 10px; }
         .spacer { width: 10%; }
-        .linea { border-top: 1px solid #000; margin-top: 60px; padding-top: 8px; }
+        .firma-titulo { font-weight: bold; margin-bottom: 60px; display: block; }
+        .linea { border-top: 1px solid #000; padding-top: 8px; margin: 0 auto; width: 80%; min-height: 40px; }
+        .nombre-firma { font-weight: bold; font-size: 11pt; display: block; }
         .cargo { font-size: 10pt; color: #333; display: block; margin-top: 2px; }
-        .footer-date { text-align: right; font-size: 9pt; margin-top: 20px; }
+        .footer-date { text-align: right; font-size: 9pt; margin-top: 40px; }
     </style>
 </head>
 <body>
@@ -47,9 +50,10 @@
         </tr>
     </table>
 
-    <!-- SECCIÓN: SOLICITANTE  -->
-    <div class="section-title">Datos Del Funcionario Solicitante</div>
+ <div class="section-title">Datos Del Funcionario Solicitante</div>
     <table class="info-table">
+        <colgroup>
+            <col style="width: 20%;"> <col style="width: 30%;"> <col style="width: 15%;"> <col style="width: 35%;"> </colgroup>
         <tr>
             <td class="label">Apellidos y Nombres:</td>
             <td colspan="3">{{ $solicitante ? $solicitante->nombre_apellido : 'ADMINISTRADOR NO VINCULADO' }}</td>
@@ -68,9 +72,14 @@
         </tr>
     </table>
 
-    <!-- SECCIÓN: RECEPTOR  -->
     <div class="section-title">Datos Del Funcionario Receptor</div>
     <table class="info-table">
+        <colgroup>
+            <col style="width: 20%;">
+            <col style="width: 30%;">
+            <col style="width: 15%;">
+            <col style="width: 35%;">
+        </colgroup>
         <tr>
             <td class="label">Apellidos y Nombres:</td>
             <td colspan="3">{{ $receptor ? $receptor->nombre_apellido : 'N/D' }}</td>
@@ -122,15 +131,13 @@
     <table class="tabla-firmas">
         <tr>
             <td>
-                <strong>ENTREGUÉ CONFORME</strong>
+                <span class="firma-titulo">ENTREGUÉ CONFORME</span>
                 <div class="linea">
                     @if($acta->tipo == 'ENTREGA' || $acta->tipo == 'TRANSFERENCIA INTERNA')
-                        <!-- Entrega el administrador/solicitante -->
-                        <strong>{{ $solicitante ? $solicitante->nombre_apellido : auth()->user()->name }}</strong><br>
+                        <span class="nombre-firma">{{ $solicitante ? $solicitante->nombre_apellido : auth()->user()->name }}</span>
                         <span class="cargo">{{ $solicitante?->oficinaCargo?->cargo?->descripcion ?? 'Encargado de Activos / Sistema' }}</span>
                     @else
-                        <!-- Si es devolución, entrega el responsable -->
-                        <strong>{{ $receptor ? $receptor->nombre_apellido : 'N/D' }}</strong><br>
+                        <span class="nombre-firma">{{ $receptor ? $receptor->nombre_apellido : 'N/D' }}</span>
                         <span class="cargo">{{ $receptor?->oficinaCargo?->cargo?->descripcion ?? 'Funcionario Responsable' }}</span>
                     @endif
                 </div>
@@ -139,15 +146,13 @@
             <td class="spacer"></td>
 
             <td>
-                <strong>RECIBÍ CONFORME</strong>
+                <span class="firma-titulo">RECIBÍ CONFORME</span>
                 <div class="linea">
                     @if($acta->tipo == 'ENTREGA' || $acta->tipo == 'TRANSFERENCIA INTERNA')
-                        <!-- Recibe el responsable -->
-                        <strong>{{ $receptor ? $receptor->nombre_apellido : 'N/D' }}</strong><br>
+                        <span class="nombre-firma">{{ $receptor ? $receptor->nombre_apellido : 'N/D' }}</span>
                         <span class="cargo">{{ $receptor?->oficinaCargo?->cargo?->descripcion ?? 'Funcionario Responsable' }}</span>
                     @else
-                        <!-- Si es devolución, recibe el administrador/solicitante -->
-                        <strong>{{ $solicitante ? $solicitante->nombre_apellido : auth()->user()->name }}</strong><br>
+                        <span class="nombre-firma">{{ $solicitante ? $solicitante->nombre_apellido : auth()->user()->name }}</span>
                         <span class="cargo">{{ $solicitante?->oficinaCargo?->cargo?->descripcion ?? 'Encargado de Activos / Sistema' }}</span>
                     @endif
                 </div>

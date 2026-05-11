@@ -80,6 +80,11 @@ public static function form(Form $form): Form
                     ->searchable()
                     ->sortable()
                     ->wrap(),
+                Tables\Columns\TextColumn::make('vida_util')
+                ->label('Vida Útil (Años)')
+                ->numeric()
+               ->searchable()
+               ->wrap(),
             ])
             ->filters([
                 //
