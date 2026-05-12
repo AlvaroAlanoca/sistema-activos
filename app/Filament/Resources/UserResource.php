@@ -17,8 +17,7 @@ class UserResource extends Resource
     use HasRoles;
     protected static ?string $model = User::class;
 
-    protected static ?string $modelLabel = 'Usuario';
-    protected static ?string $pluralModelLabel = 'Usuarios';
+    
     protected static ?string $navigationIcon = 'heroicon-o-users'; // Cambié el ícono para que tenga más sentido (usuarios)
     protected static bool $shouldRegisterNavigation = true;
     protected static ?string $navigationLabel = 'Usuarios del Sistema';
