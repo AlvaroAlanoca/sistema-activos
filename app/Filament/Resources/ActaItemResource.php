@@ -22,7 +22,17 @@ class ActaItemResource extends Resource
     protected static ?string $navigationGroup = 'Transacciones';
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
+    
+    public static function canCreate(): bool
+    {
+        return false;
+    }
 
+    // 2. Bloquea cualquier intento de edición en este recurso
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return false;
+    }
     public static function form(Form $form): Form
     {
         return $form->schema([

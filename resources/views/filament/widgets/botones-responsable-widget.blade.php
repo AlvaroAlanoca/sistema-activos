@@ -8,7 +8,7 @@
                     ¡Hola, {{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()->name }}!
                 </h2>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Gestione los activos fijos bajo su custodia en el SEDUCA. ¿Qué desea hacer hoy?
+                    Gestione los activos fijos bajo su custodia en el DDELPZ. ¿Qué desea hacer hoy?
                 </p>
             </div>
 

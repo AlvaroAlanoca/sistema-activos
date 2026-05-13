@@ -13,7 +13,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 | Aquí es donde puedes registrar las rutas web para tu aplicación.
 |
 */
-
+Route::get('/', function () {
+    return redirect('/admin');
+});
 
 Route::get('/acta/{acta}/imprimir', function (App\Models\Acta $acta) {
     

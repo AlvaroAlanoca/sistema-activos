@@ -28,11 +28,11 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(\App\Filament\Pages\Auth\CustomLogin::class)
-            ->brandName('Control de Activos Fijos - SEDUCA')
+            ->brandName('CONTROL DE BIENES Y SERVICIOS DDELPZ')
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <img src="' . asset('img/logo.png') . '" alt="Escudo SEDUCA" style="height: 3rem;">
-                    <span style="font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; color: inherit;">SEDUCA</span>
+                    <img src="' . asset('img/logo.png') . '" alt="Escudo DDELPZ" style="height: 3rem;">
+                    <span style="font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; color: inherit;">DDELPZ</span>
                 </div>
             '))
             ->brandLogoHeight('5rem')

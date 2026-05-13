@@ -10,9 +10,11 @@ class CustomLogin extends BaseLogin
     // Cambiamos el título principal
     public function getHeading(): string|Htmlable
     {
-        return 'SISTEMA DE CONTROL DE BIENES Y SERVICIOS';
+        return 'CONTROL DE BIENES Y SERVICIOS DDELPZ';
     }
-
+public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable{
+    return '';
+}
     // Agregamos un subtítulo profesional
     public function getSubheading(): string|Htmlable|null
     {

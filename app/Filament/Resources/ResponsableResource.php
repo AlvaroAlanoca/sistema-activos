@@ -202,11 +202,36 @@ class ResponsableResource extends Resource
                             return; 
                         }
 
-                        $nuevaActa = Acta::create([
-                            'tipo' => 'DEVOLUCION',
-                            'numero_acta' => 'DEV-' . now()->format('Ymd-His'),
-                            'id_responsables' => $record->idresponsables,
-                            'observaciones' => $data['observaciones'],
+                        // NUEVO CÓDIGO CORRELATIVO:
+                        $anioActual = now()->year;
+
+                        // 1. Buscamos la última acta de DEVOLUCION creada en este año
+                        $ultimaActa = \App\Models\Acta::where('tipo', 'DEVOLUCION')
+                        ->where('numero_acta', 'like', "DEV-%-{$anioActual}")
+                        ->orderBy('idacta', 'desc') // Asegúrate de que 'idacta' sea el nombre correcto de tu llave primaria
+                        ->first();
+
+                        $siguienteNumero = 1;
+
+                        // 2. Si ya existe una, extraemos el número del medio y le sumamos 1
+                        if ($ultimaActa) {
+                        $partes = explode('-', $ultimaActa->numero_acta); // Divide 'DEV-001-2026' en partes
+                        if (isset($partes[1])) {
+                        $siguienteNumero = intval($partes[1]) + 1;
+                            }
+                        }
+
+                        // 3. Formateamos el número para que siempre tenga 4
+                        $correlativo = str_pad($siguienteNumero, 4, '0', STR_PAD_LEFT);
+                        $numeroGenerado = "DEV-{$correlativo}-{$anioActual}";
+
+                        // 4. Formato
+                    $nuevaActa = Acta::create([
+                        'tipo' => 'DEVOLUCION',
+                    'numero_acta' => $numeroGenerado,
+                    'id_responsables' => $record->idresponsables, // O $record->id dependiendo de cómo se llame tu primary key
+                    'observaciones' => $data['observaciones'],
+
                         ]);
 
                         foreach ($data['bienes_a_devolver'] as $idBien) {

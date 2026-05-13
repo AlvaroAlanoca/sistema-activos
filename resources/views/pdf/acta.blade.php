@@ -161,7 +161,7 @@
     </table>
 
     <div class="footer-date">
-        <p>Documento generado por el Sistema SEDUCA - {{ date('Y') }}</p>
+        <p>Documento generado por el Sistema DDELPZ - {{ date('Y') }}</p>
     </div>
 
 </body>
