@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
          $table->string('rol')->default('admin'); // 'admin' o 'responsable'
-        $table->foreignId('responsable_id')->nullable()->constrained('responsables')->nullOnDelete();
+        $table->foreignId('responsable_id')->nullable()->references('idresponsables')->on('responsables');
         });
     }
 

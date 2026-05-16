@@ -101,19 +101,43 @@ Select::make('bien_id')
     }
 
     // Método para descargar el Excel (Ejecutado desde la vista)
-    public function descargarExcel()
+public function descargarExcel()
     {
         $filtros = $this->form->getState();
-        return Excel::download(new ReporteBienesExport($filtros), 'busqueda_especifica.xlsx');
-    }
+        
+        // Capturamos quién está descargando el Excel
+        $usuarioActivo = \Illuminate\Support\Facades\Auth::user();
+        $generadoPor = ($usuarioActivo && $usuarioActivo->responsable) 
+            ? $usuarioActivo->responsable->nombre_apellido 
+            : ($usuarioActivo ? $usuarioActivo->name : 'Sistema');
 
-    // Método para descargar el PDF (Ejecutado desde la vista)
+        // Le enviamos la variable $generadoPor a la clase del Excel
+        return Excel::download(
+            new ReporteBienesExport($filtros, $generadoPor), 
+            'reporte_bienes_' . date('Ymd_Hi') . '.xlsx'
+        );
+    }
+// Método para descargar el PDF (Ejecutado desde la vista)
     public function descargarPdf()
     {
         $filtros = $this->form->getState();
         $reporte = new ReporteBienesExport($filtros);
         $items = $reporte->collection();
-        $pdf = Pdf::loadView('pdf.reporte-consolidado', ['items' => $items, 'filtros' => $filtros]);
+        
+        // 1. Capturamos el usuario logueado en el sistema
+        $usuarioActivo = \Illuminate\Support\Facades\Auth::user();
+        
+        // 2. Extraemos el nombre viajando a la tabla responsables por su llave foránea
+        $generadoPor = ($usuarioActivo && $usuarioActivo->responsable) 
+            ? $usuarioActivo->responsable->nombre_apellido 
+            : ($usuarioActivo ? $usuarioActivo->name : 'Sistema');
+
+        // 3. Pasamos la variable al Blade y forzamos el formato horizontal (landscape)
+        $pdf = Pdf::loadView('pdf.reporte-consolidado', [
+            'items' => $items, 
+            'filtros' => $filtros,
+            'generado_por' => $generadoPor // <-- Mandamos el nombre de quien opera
+        ])->setPaper('letter', 'landscape'); // Conserva la estética simétrica de columnas
         
         return response()->streamDownload(fn () => print($pdf->output()), "busqueda_especifica.pdf");
     }

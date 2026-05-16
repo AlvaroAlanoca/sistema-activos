@@ -26,10 +26,17 @@ class UserResource extends Resource
     // Opcional: puedes meterlo en un grupo si quieres
     // protected static ?string $navigationGroup = 'Administración de Personal';
 
-    public static function form(Form $form): Form
+public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                // 2. EL SELECTOR DE RESPONSABLE (Ahora siempre visible)
+                Forms\Components\Select::make('id_responsable')
+                    ->label('Vincular con ficha de Responsable')
+                    ->relationship('responsable', 'nombre_apellido')
+                    ->searchable()
+                    ->preload()
+                    ->required(), // Opcional: Quita esta línea si quieres que crear usuarios sin ficha sea permitido
                 Forms\Components\TextInput::make('name')
                     ->label('Alias')
                     ->required(),
@@ -39,43 +46,22 @@ class UserResource extends Resource
                     ->email()
                     ->required(),
                     
-        Forms\Components\TextInput::make('password')
-            ->label('Contraseña')
-            ->password()
-            ->dehydrateStateUsing(fn ($state) => bcrypt($state))
-            ->dehydrated(fn ($state) => filled($state)) 
-            ->required(fn (string $context): bool => $context === 'create'), 
+                Forms\Components\TextInput::make('password')
+                    ->label('Contraseña')
+                    ->password()
+                    ->dehydrateStateUsing(fn ($state) => bcrypt($state))
+                    ->dehydrated(fn ($state) => filled($state)) 
+                    ->required(fn (string $context): bool => $context === 'create'), 
 
-                // 1. EL NUEVO SELECTOR DE ROLES DE SHIELD
+                // 1. EL SELECTOR DE ROLES DE SHIELD
                 Forms\Components\Select::make('roles')
                     ->label('Asignar Rol(es) de Acceso')
                     ->relationship('roles', 'name')
-                    ->multiple() // Permite elegir más de uno
+                    ->multiple() 
                     ->preload()
-                    ->searchable()
-                    ->live(), // Hace que el formulario reaccione al instante (reemplaza a reactive)
+                    ->searchable(), // Ya no necesitamos ->live() porque nada depende de este campo ahora
 
-                // 2. EL SELECTOR DE RESPONSABLE (Adaptado a Shield)
-                Forms\Components\Select::make('id_responsable')
-                    ->label('Vincular con ficha de Responsable')
-                    ->relationship('responsable', 'nombre_apellido')
-                    ->searchable()
-                    ->preload()
-                    ->visible(function (\Filament\Forms\Get $get) {
-                        // Obtenemos los IDs de los roles seleccionados (viene como arreglo)
-                        $selectedRoles = $get('roles') ?? [];
-                        
-                        
-                        $rolResponsable = Role::where('name', 'responsable')->first();
-                        
-                        // Mostramos el campo solo si el usuario tiene ese ID de rol
-                        return $rolResponsable && in_array($rolResponsable->id, $selectedRoles);
-                    })
-                    ->required(function (\Filament\Forms\Get $get) {
-                        $selectedRoles = $get('roles') ?? [];
-                        $rolResponsable = Role::where('name', 'responsable')->first();
-                        return $rolResponsable && in_array($rolResponsable->id, $selectedRoles);
-                    }),
+
             ]);
     }
 

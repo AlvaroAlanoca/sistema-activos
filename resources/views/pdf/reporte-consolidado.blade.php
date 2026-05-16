@@ -4,21 +4,39 @@
     <meta charset="UTF-8">
     <title>Reporte Consolidado de Bienes</title>
     <style>
-        @page { margin: 30px; }
+        /* Sugerencia: Si las columnas se ven muy apretadas, puedes añadir 'landscape' aquí */
+        @page { margin: 30px; } 
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; }
-        .header { background-color: #1e3a8a; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 20px; }
+        
+        /* ESTILOS DEL ENCABEZADO INSTITUCIONAL */
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .header-table td { border-bottom: 3px solid #1e3a8a; padding-bottom: 12px; }
+        .logo-cell { width: 25%; vertical-align: middle; }
+        .title-cell { width: 75%; text-align: right; vertical-align: bottom; }
+        .institucion { color: #1e3a8a; margin: 0; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+        .tipo-reporte { margin: 5px 0 0 0; font-size: 12px; font-weight: bold; color: #555; background-color: #ecf0f1; display: inline-block; padding: 5px 15px; border-radius: 4px; text-transform: uppercase; }
+
+        /* ESTILOS DE LA TABLA */
         .table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .table th { background-color: #ecf0f1; padding: 8px; border: 1px solid #bdc3c7; font-weight: bold; text-align: center; font-size: 10px; }
         .table td { padding: 6px; border: 1px solid #bdc3c7; text-align: center; font-size: 9px; word-wrap: break-word; }
-        .footer { text-align: right; font-size: 8px; margin-top: 20px; color: #7f8c8d; }
+        
+        .footer { text-align: right; font-size: 8px; margin-top: 20px; color: #7f8c8d; border-top: 1px solid #bdc3c7; padding-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        CONTROL DE BIENES Y SERVICIOS DDELPZ<br>
-        <span style="font-size: 12px; font-weight: normal;">Reporte Consolidado de Activos</span>
-    </div>
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell">
+                <img src="{{ public_path('img/logo.png') }}" style="height: 55px; width: auto;" alt="Logo Institucional">
+            </td>
+            <td class="title-cell">
+                <h2 class="institucion">CONTROL DE BIENES Y SERVICIOS DDELPZ</h2>
+                <p class="tipo-reporte">Reporte Consolidado de Activos</p>
+            </td>
+        </tr>
+    </table>
 
     <table class="table">
         <thead>
@@ -60,8 +78,8 @@
         </tbody>
     </table>
 
-    <div class="footer">
-        Documento generado el {{ now()->format('d/m/Y H:i') }}
+   <div class="footer">
+        Generado por: <strong>{{ $generado_por }}</strong> | Documento generado por el Sistema  DDELPZ el {{ now()->format('d/m/Y H:i') }}
     </div>
 
 </body>

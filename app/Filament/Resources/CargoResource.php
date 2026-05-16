@@ -60,7 +60,7 @@ class CargoResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(), // Botón individual de borrar
+               // Tables\Actions\DeleteAction::make(), // Botón individual de borrar
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

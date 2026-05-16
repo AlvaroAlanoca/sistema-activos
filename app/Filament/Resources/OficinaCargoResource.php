@@ -75,11 +75,11 @@ class OficinaCargoResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(), // Agregado botón individual
+                //Tables\Actions\DeleteAction::make(), // Agregado botón individual
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                 //   Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('oficina.descripcion', 'asc'); // Agrupa alfabéticamente por oficina al inicio

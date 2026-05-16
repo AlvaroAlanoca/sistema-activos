@@ -56,26 +56,43 @@ class ReporteGeneral extends Page implements HasForms
             ->statePath('data');
     }
 
-    public function descargarExcel()
+public function descargarExcel()
     {
         $filtros = $this->form->getState();
+        
+        // Capturamos quién está descargando el Excel
+        $usuarioActivo = \Illuminate\Support\Facades\Auth::user();
+        $generadoPor = ($usuarioActivo && $usuarioActivo->responsable) 
+            ? $usuarioActivo->responsable->nombre_apellido 
+            : ($usuarioActivo ? $usuarioActivo->name : 'Sistema');
+
+        // Le enviamos la variable $generadoPor a la clase del Excel
         return Excel::download(
-            new ReporteBienesExport($filtros), 
-            'reporte_general_' . date('Ymd') . '.xlsx'
+            new ReporteBienesExport($filtros, $generadoPor), 
+            'reporte_bienes_' . date('Ymd_Hi') . '.xlsx'
         );
     }
 
-    public function descargarPdf()
+public function descargarPdf()
     {
         $filtros = $this->form->getState();
         $reporte = new ReporteBienesExport($filtros);
         $items = $reporte->collection();
         
-        // Reutilizamos la vista profesional que creamos anteriormente
+        // 1. CAPTURAMOS AL USUARIO EN SESIÓN
+        $usuarioActivo = \Illuminate\Support\Facades\Auth::user();
+        
+        // 2. EXTRAEMOS SU NOMBRE (Con validación por si es un admin sin ficha)
+        $generadoPor = ($usuarioActivo && $usuarioActivo->responsable) 
+            ? $usuarioActivo->responsable->nombre_apellido 
+            : ($usuarioActivo ? $usuarioActivo->name : 'Sistema');
+        
+        // 3. PASAMOS LA VARIABLE A LA VISTA
         $pdf = Pdf::loadView('pdf.reporte-consolidado', [
             'items' => $items, 
-            'filtros' => $filtros
-        ])->setPaper('letter', 'landscape'); // Formato horizontal para mejor visibilidad
+            'filtros' => $filtros,
+            'generado_por' => $generadoPor // <-- Aquí inyectamos el nombre
+        ])->setPaper('letter', 'landscape');
         
         return response()->streamDownload(
             fn () => print($pdf->output()), 

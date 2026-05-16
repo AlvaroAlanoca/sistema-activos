@@ -15,10 +15,12 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class ReporteBienesExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
     protected array $filtros;
+    protected string $generadoPor;
 
-    public function __construct(array $filtros)
+public function __construct(array $filtros, string $generadoPor = 'Sistema')
     {
         $this->filtros = $filtros;
+        $this->generadoPor = $generadoPor; 
     }
 
 public function collection()
@@ -117,9 +119,11 @@ public function map($fila): array
 
     public function headings(): array
     {
+
         return [
             ['CONTROL DE BIENES Y SERVICIOS DDELPZ'],
-            [''],
+            ['Reporte generado por: ' . $this->generadoPor], // <-- 3. Imprimimos el nombre aquí
+            [''], 
             [
                 'Nombre del Funcionario',
                 'Nro. Ítem',
@@ -134,33 +138,52 @@ public function map($fila): array
         ];
     }
 
-    public function styles(Worksheet $sheet)
+ public function styles(Worksheet $sheet)
     {
-        // Combinar celdas para el título (A1 a H1)
+        // Combinar celdas para el título principal (Fila 1)
         $sheet->mergeCells('A1:I1');
+        
+        // Combinar celdas para los datos del creador del reporte (Fila 2)
+        $sheet->mergeCells('A2:I2');
 
         return [
-            // Estilo del título principal
+            // Estilo del título principal (Fila 1)
             1 => [
                 'font' => [
                     'bold' => true, 
                     'size' => 16,
-                    'color' => ['argb' => 'FF333333']
+                    'color' => ['argb' => 'FF1E3A8A'] 
                 ], 
                 'alignment' => [
                     'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                     'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
                 ]
             ],
-            // Estilo de la cabecera de la tabla
-            3 => [
+            // Estilo de los metadatos de creación (Fila 2)
+            2 => [
+                'font' => [
+                    'italic' => true,
+                    'size' => 10,
+                    'color' => ['argb' => 'FF555555']
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ]
+            ],
+            // Titulos de tabla
+            4 => [
                 'font' => [
                     'bold' => true,
-                    'size' => 12
+                    'size' => 11,
+                    'color' => ['argb' => 'FF2C3E50']
                 ],
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                     'color' => ['argb' => 'FFF2F2F2'] 
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                 ]
             ],
         ];

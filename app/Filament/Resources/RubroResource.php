@@ -91,7 +91,7 @@ public static function form(Form $form): Form
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(), // Botón de eliminar individual
+               // Tables\Actions\DeleteAction::make(), // Botón de eliminar individual
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -30,15 +30,12 @@ return new class extends Migration
     Schema::create('tipo_bien', function ($table) { 
         $table->id('idtipo_bien'); 
         $table->string('descripcion'); 
-        $table->unsignedInteger('id_rubro'); 
-        $table->foreign('id_rubro')->references('idrubros')->on('rubros'); 
+        $table->foreignId('id_rubro')->references('idrubros')->on('rubros'); 
         });
     Schema::create('oficinas_cargos', function ($table) { 
         $table->id('idoficinas_cargos'); 
-        $table->unsignedInteger('id_cargos'); 
-        $table->unsignedInteger('id_oficinas'); 
-        $table->foreign('id_cargos')->references('idcargos')->on('cargos'); 
-        $table->foreign('id_oficinas')->references('idoficinas')->on('oficinas'); 
+        $table->foreignId('id_cargos')->references('idcargos')->on('cargos'); 
+        $table->foreignId('id_oficinas')->references('idoficinas')->on('oficinas'); 
         });
 
     // 3. Maestros
@@ -47,31 +44,27 @@ return new class extends Migration
         $table->string('estado'); 
         $table->string('codigo'); 
         $table->string('descripcion'); 
-        $table->unsignedInteger('id_tipo_bien'); 
-        $table->foreign('id_tipo_bien')->references('idtipo_bien')->on('tipo_bien'); 
+        $table->foreignId('id_tipo_bien')->references('idtipo_bien')->on('tipo_bien'); 
         });
     Schema::create('responsables', function ($table) { 
         $table->id('idresponsables'); 
         $table->string('nombre_apellido'); 
-        $table->unsignedInteger('id_oficinas_cargos'); 
-        $table->foreign('id_oficinas_cargos')->references('idoficinas_cargos')->on('oficinas_cargos'); 
+        $table->foreignId('id_oficinas_cargos')->references('idoficinas_cargos')->on('oficinas_cargos'); 
         });
 
     // 4. Transacciones
     Schema::create('actas', function ($table) { 
         $table->id('idacta'); 
         $table->string('tipo'); 
-        $table->string('numero_acta'); 
-        $table->unsignedInteger('id_responsables'); 
-        $table->foreign('id_responsables')->references('idresponsables')->on('responsables'); 
+        $table->string('numero_acta');
+        $table->foreignId('id_responsables')->references('idresponsables')->on('responsables'); 
         });
     Schema::create('acta_items', function ($table) { 
         $table->id('idacta_items'); 
-        $table->unsignedInteger('id_bienes'); 
-        $table->unsignedInteger('id_acta'); 
+
         $table->string('estado'); 
-        $table->foreign('id_bienes')->references('idbienes')->on('bienes'); 
-        $table->foreign('id_acta')->references('idacta')->on('actas')->onDelete('cascade'); 
+        $table->foreignId('id_bienes')->references('idbienes')->on('bienes'); 
+        $table->foreignId('id_acta')->references('idacta')->on('actas')->onDelete('cascade'); 
         });
 }
     /**
