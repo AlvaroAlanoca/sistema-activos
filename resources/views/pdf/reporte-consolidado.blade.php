@@ -79,7 +79,7 @@
     </table>
 
    <div class="footer">
-        Generado por: <strong>{{ $generado_por }}</strong> | Documento generado por el Sistema  DDELPZ el {{ now()->format('d/m/Y H:i') }}
+        Generado por: <strong>{{ $generado_por }}</strong> | Sistema  DDELPZ el {{ now()->format('d/m/Y H:i') }}
     </div>
 
 </body>

@@ -172,8 +172,11 @@
         </tr>
     </table>
 
-    <div class="footer-date">
-        <p>Documento generado por el Sistema DDELPZ - {{ date('Y') }}</p>
+<div class="footer-date">
+        <p>
+            Generado por: <strong>{{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()?->name ?? 'Sistema' }}</strong> 
+            | Sistema DDELPZ - {{ date('Y') }}
+        </p>
     </div>
 
 </body>

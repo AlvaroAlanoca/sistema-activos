@@ -34,7 +34,7 @@
                 <img src="{{ public_path('img/logo.png') }}" alt="Logo" style="height: 70px; width: auto;">
             </td>
             <td class="header-text">
-                <h1>DDELPZ - BOLIVIA</h1>
+                <h1>DIRECCIÓN DEPARTAMENTAL DE EDUCACIÓN LA PAZ DDELPZ - BOLIVIA</h1>
                 <p class="subtitle">REPORTE DE CONTRATACIÓN DE SERVICIOS</p>
             </td>
         </tr>
@@ -77,7 +77,10 @@
     </div>
 
     <div class="footer">
-        <p>Documento generado electrónicamente el: {{ now()->format('d/m/Y H:i') }}</p>
+<p>
+            Generado por: <strong>{{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()?->name ?? 'Sistema' }}</strong> 
+            | Sistema DDELPZ - {{ date('Y') }}
+        </p>
         <div class="signature-container">
             <br><br>
             <span class="signature-line">Firma Responsable</span>

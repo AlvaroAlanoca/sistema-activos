@@ -24,44 +24,69 @@ class ServicioResource extends Resource
     // Le ponemos 0 para que aparezca arriba de "Contratos" (que le pusimos 1)
     protected static ?int $navigationSort = 0; 
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Datos del Servicio')
-                    ->description('Registre los datos de la empresa proveedora y su código de contratación.')
-                    ->schema([
-                        Forms\Components\TextInput::make('cuce')
-                            ->label('Código CUCE')
-                            ->required()
-                            ->unique(ignoreRecord: true) // Evita registrar dos veces el mismo código estatal
-                            ->maxLength(255),
-                            
-                        Forms\Components\TextInput::make('empresa')
-                            ->label('Nombre de la Empresa / Proveedor')
-                            ->required()
-                            ->maxLength(255),
-                            
-                        Forms\Components\Textarea::make('descripcion')
-                            ->label('Descripción General del Servicio')
-                            ->placeholder('Detalles adicionales sobre lo que provee esta empresa...')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])->columns(2),
-            ]);
-    }
+public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\Section::make('Datos del Servicio')
+                ->description('Registre los datos de la empresa proveedora y el origen del servicio.')
+                ->schema([
+                    // NUEVO CAMPO: Selector de Origen / Tipo de Servicio
+                    Forms\Components\Select::make('tipo')
+                        ->label('Tipo de Servicio / Origen')
+                        ->options([
+                            'DDELPZ' => 'De la empresa DDELPZ',
+                            'SICOES' => 'De SICOES',
+                        ])
+                        ->required()
+                        ->native(false) // Le da una estética visual más moderna desplegable
+                        ->default('SICOES'), // Opción por defecto
+                        
+                    Forms\Components\TextInput::make('cuce')
+                        ->label('Código')
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(255),
+                        
+                    Forms\Components\TextInput::make('empresa')
+                        ->label('Nombre de la Empresa / Proveedor')
+                        ->required()
+                        ->maxLength(255),
+                        
+                    Forms\Components\Textarea::make('descripcion')
+                        ->label('Descripción General del Servicio')
+                        ->placeholder('Detalles adicionales sobre lo que provee esta empresa...')
+                        ->rows(3)
+                        ->columnSpanFull(),
+                ])->columns(3), // Cambiamos a 3 columnas para que encajen perfecto los primeros campos
+        ]);
+}
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('tipo')
+                ->label('Origen')
+                ->badge()
+                ->color(fn (string $state): string => match ($state) {
+                    'DDELPZ' => 'success', // Color verde institucional
+                    'SICOES' => 'warning', // Color naranja de advertencia/proceso
+                    default => 'gray',
+                })
+                ->sortable(),
                 Tables\Columns\TextColumn::make('cuce')
                     ->label('CUCE')
                     ->searchable()
                     ->sortable()
                     ->badge()
                     ->color('info'), // Le da un color azulito institucional al código
-                    
+                 Tables\Columns\TextColumn::make('descripcion')
+                    ->label('Descripcion del Servicio')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(50),
+                   
                 Tables\Columns\TextColumn::make('empresa')
                     ->label('Empresa Proveedora')
                     ->searchable()

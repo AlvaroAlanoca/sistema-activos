@@ -20,6 +20,7 @@ class ServicioContratoResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
         protected static ?string $navigationGroup = 'Contratos';
+        protected static ?string $navigationLabel = 'Informe Contrato';
         protected static ?int $navigationSort = 1;
 
 public static function form(Form $form): Form
@@ -91,11 +92,15 @@ public static function table(Table $table): Table
             Tables\Columns\TextColumn::make('user.responsable.nombre_apellido')
     ->label('Responsable')
     ->searchable()
-    ->sortable(),
+    ->sortable()
+    ->limit(15),
                 Tables\Columns\TextColumn::make('servicio.empresa')->label('Empresa')->sortable(),
-            Tables\Columns\TextColumn::make('servicio.cuce')->label('CUCE')->searchable(),
-            Tables\Columns\TextColumn::make('fecha_fin')->label('Vence el')->date()->sortable(),
-            Tables\Columns\BadgeColumn::make('estado')
+            Tables\Columns\TextColumn::make('servicio.cuce')->label('Codigo')->searchable()->limit(20)->sortable(),
+            Tables\Columns\TextColumn::make('descripcion')->label('Descripcion Contrato')->searchable()->limit(40)->sortable(),
+            Tables\Columns\TextColumn::make('servicio.descripcion')->label('Descripcion')->sortable()->limit(40),
+            Tables\Columns\TextColumn::make('fecha_inicio')->label('Comienza el')->date()->sortable() ->toggleable(isToggledHiddenByDefault: false),
+            Tables\Columns\TextColumn::make('fecha_fin')->label('Vence el')->date()->sortable() ->toggleable(isToggledHiddenByDefault: false),
+            Tables\Columns\BadgeColumn::make('estado') ->toggleable(isToggledHiddenByDefault: false)
                 ->colors([
                     'warning' => 'pendiente',
                     'success' => 'cumplido',

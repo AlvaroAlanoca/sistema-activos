@@ -20,6 +20,7 @@ class Servicio extends Model
         'cuce',
         'descripcion',
         'empresa',
+        'tipo',
     ];
 
     // Relación inversa: Un servicio puede estar en muchos contratos
