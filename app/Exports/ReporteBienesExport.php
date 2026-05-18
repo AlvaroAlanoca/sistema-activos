@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Acta;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -31,12 +32,18 @@ public function collection()
             'items.bien.tipoBien'
         ])->whereIn('tipo', ['ENTREGA', 'TRANSFERENCIA INTERNA', 'DEVOLUCION']);
 
-        // 1. Filtros de Fechas
+
+        // 1. Filtros de Fechas (Con Carbon)
         if (!empty($this->filtros['fecha_inicio'])) {
-            $query->whereDate('created_at', '>=', $this->filtros['fecha_inicio']);
+            // Convierte la fecha recibida al formato seguro y al primer segundo del día (00:00:00)
+            $fechaInicio = Carbon::parse($this->filtros['fecha_inicio'])->startOfDay();
+            $query->where('created_at', '>=', $fechaInicio);
         }
+        
         if (!empty($this->filtros['fecha_fin'])) {
-            $query->whereDate('created_at', '<=', $this->filtros['fecha_fin']);
+            // Convierte la fecha recibida al formato seguro y al último segundo del día (23:59:59)
+            $fechaFin = Carbon::parse($this->filtros['fecha_fin'])->endOfDay();
+            $query->where('created_at', '<=', $fechaFin);
         }
         
         // 2. Filtro de Responsable

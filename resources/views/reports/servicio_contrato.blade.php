@@ -49,6 +49,10 @@
             <td class="label">CUCE:</td>
             <td>{{ $contrato->servicio->cuce }}</td>
         </tr>
+                <tr>
+            <td class="label">Descripción:</td>
+            <td>{{ $contrato->servicio->descripcion }}</td>
+        </tr>
         <tr>
             <td class="label">Empresa Proveedora:</td>
             <td>{{ $contrato->servicio->empresa }}</td>
@@ -79,7 +83,7 @@
     <div class="footer">
 <p>
             Generado por: <strong>{{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()?->name ?? 'Sistema' }}</strong> 
-            | Sistema DDELPZ - {{ date('Y') }}
+            | Sistema DDELPZ - {{ now()->format('d/m/Y H:i') }}
         </p>
         <div class="signature-container">
             <br><br>

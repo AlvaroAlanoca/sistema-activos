@@ -174,8 +174,9 @@
 
 <div class="footer-date">
         <p>
+                {{-- Aqui esta la impresion de usuario --}}
             Generado por: <strong>{{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()?->name ?? 'Sistema' }}</strong> 
-            | Sistema DDELPZ - {{ date('Y') }}
+            | Sistema DDELPZ - {{ now()->format('d/m/Y H:i') }}
         </p>
     </div>
 
