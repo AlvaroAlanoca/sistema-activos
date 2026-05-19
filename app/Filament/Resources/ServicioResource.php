@@ -86,12 +86,20 @@ public static function form(Form $form): Form
                     ->searchable()
                     ->sortable()
                     ->limit(50),
-                   
+            
                 Tables\Columns\TextColumn::make('empresa')
                     ->label('Empresa Proveedora')
                     ->searchable()
                     ->sortable(),
-                    
+                Tables\Columns\TextColumn::make('fecha_inicio')
+                    ->label('Fecha Inicio')
+                    ->searchable(),      
+                Tables\Columns\TextColumn::make('fecha_final')
+                    ->label('Fecha Final')
+                    ->searchable(),     
+                Tables\Columns\TextColumn::make('porcentaje_avance')
+                    ->label('% Avance')
+                    ->searchable(),            
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de Registro')
                     ->dateTime('d/m/Y')

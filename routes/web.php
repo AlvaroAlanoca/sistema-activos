@@ -63,3 +63,19 @@ Route::get('/acta/{acta}/imprimir', function (App\Models\Acta $acta) {
     return $pdf->stream("Acta_{$nombreSeguro}.pdf");
 
 })->name('acta.imprimir')->middleware('auth');
+Route::get('/servicios/imprimir', function () {
+    
+    // 1. Traemos todos los servicios ordenados por los más recientes
+    $servicios = \App\Models\Servicio::orderBy('created_at', 'desc')->get();
+
+    // 2. Renderizamos la vista del PDF (en formato horizontal)
+    // Nota: Usaré 'pdf.servicios' para mantener el orden de tu carpeta de vistas
+    $pdf = Pdf::loadView('pdf.servicios', [
+        'servicios' => $servicios,
+        'fecha_generacion' => now()->format('d/m/Y H:i')
+    ])->setPaper('letter', 'landscape');
+
+    // 3. Mostramos el PDF
+    return $pdf->stream("Reporte_Servicios_DDELPZ.pdf");
+
+})->name('servicios.imprimir')->middleware('auth');

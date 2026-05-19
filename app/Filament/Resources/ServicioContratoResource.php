@@ -100,6 +100,7 @@ public static function table(Table $table): Table
             Tables\Columns\TextColumn::make('servicio.descripcion')->label('Descripcion')->sortable()->limit(40),
             Tables\Columns\TextColumn::make('fecha_inicio')->label('Comienza el')->date()->sortable() ->toggleable(isToggledHiddenByDefault: false),
             Tables\Columns\TextColumn::make('fecha_fin')->label('Vence el')->date()->sortable() ->toggleable(isToggledHiddenByDefault: false),
+                        Tables\Columns\TextColumn::make('fecha_pago')->label('Fecha Pago')->date()->sortable() ->toggleable(isToggledHiddenByDefault: false),
             Tables\Columns\BadgeColumn::make('estado') ->toggleable(isToggledHiddenByDefault: false)
                 ->colors([
                     'warning' => 'pendiente',

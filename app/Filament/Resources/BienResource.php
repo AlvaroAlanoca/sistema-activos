@@ -144,7 +144,7 @@ class BienResource extends Resource
                     ->label('Rubro Presupuestario')
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('fecha_compra')
                     ->label('Fecha Adquisición')
                     ->color('gray')
                     ->searchable()
