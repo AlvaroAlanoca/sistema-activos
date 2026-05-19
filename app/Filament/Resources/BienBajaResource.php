@@ -19,6 +19,8 @@ class BienBajaResource extends Resource
     protected static ?string $modelLabel = 'Baja de Activo';
     protected static ?string $pluralModelLabel = 'Bienes dados de Baja';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Contratos';
+    protected static ?int $navigationSort = 3; 
 
 public static function form(Form $form): Form
     {
@@ -31,15 +33,24 @@ public static function form(Form $form): Form
 \Filament\Forms\Components\Select::make('idbienes')
     ->label('Bien / Activo a Dar de Baja')
     ->relationship(
-        name: 'bien', 
+        name: 'bien',
         titleAttribute: 'descripcion',
-        // ¡ESTA ES LA LÍNEA CLAVE! Filtramos directamente en la base de datos
-        modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('estado', 'DISPONIBLE')
+        modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query, ?\App\Models\BienBaja $record) {
+            // Si estamos en "Modo Edición" ($record ya existe), mostramos los disponibles + el activo actual
+            if ($record) {
+                return $query->where('estado', 'DISPONIBLE')
+                             ->orWhere('idbienes', $record->idbienes); // Permite cargar el nombre del que ya se dio de baja
+            }
+            // Si estamos en "Modo Creación", solo mostramos los disponibles
+            return $query->where('estado', 'DISPONIBLE');
+        }
     )
     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->codigo} - {$record->descripcion}")
     ->searchable()
     ->preload()
     ->required()
+    ->disabled(fn (?\App\Models\BienBaja $record) => $record !== null) // Bloquea el campo en edición para no cambiar de equipo por error
+    ->dehydrated() // Asegura que el ID se envíe al guardar aunque el campo esté bloqueado
     ->columnSpanFull(),
 
                         \Filament\Forms\Components\TextInput::make('motivo_baja')

@@ -89,6 +89,13 @@ class BienResource extends Resource
                         ->prefix('Bs.') 
                         ->maxValue(99999999.99)
                         ->nullable(),    
+// ¡AQUÍ ESTÁ EL CAMBIO! Usamos DatePicker en lugar de TextInput
+Forms\Components\DatePicker::make('fecha_compra')
+    ->label('Fecha de la compra')
+    ->displayFormat('d/m/Y')
+    ->format('Y-m-d')
+    ->native(false)
+    ->required(),
                 ])->columns(2),
 
             // SECCIÓN: DETALLES Y ESTADO
@@ -328,26 +335,28 @@ class BienResource extends Resource
             ->defaultSort('codigo', 'asc');
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
+public static function getEloquentQuery(): Builder
+{
+    // 1. Filtro Global: Excluimos de raíz todos los bienes con estado 'DE BAJA'
+    $query = parent::getEloquentQuery()->where('estado', '!=', 'DE BAJA');
+    
+    /** @var \App\Models\User|null $user */
+    $user = Auth::user();
 
-        // Filtramos para que el responsable solo vea sus bienes, ignorando al super_admin y admin
-        if ($user && $user->hasRole('responsable') && !$user->hasRole('super_admin') && !$user->hasRole('admin')) {
-            $query->whereIn('idbienes', function ($subquery) use ($user) {
-                $subquery->select('ai.id_bienes')
-                         ->from('acta_items as ai')
-                         ->join('actas as a', 'a.idacta', '=', 'ai.id_acta')
-                         ->where('a.id_responsables', $user->responsable_id)
-                         ->where('a.tipo', '!=', 'DEVOLUCION')
-                         ->whereRaw('a.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = ai.id_bienes)');
-            });
-        }
-
-        return $query;
+    // 2. Tu lógica existente para restringir la vista al rol 'responsable'
+    if ($user && $user->hasRole('responsable') && !$user->hasRole('super_admin') && !$user->hasRole('admin')) {
+        $query->whereIn('idbienes', function ($subquery) use ($user) {
+            $subquery->select('ai.id_bienes')
+                     ->from('acta_items as ai')
+                     ->join('actas as a', 'a.idacta', '=', 'ai.id_acta')
+                     ->where('a.id_responsables', $user->responsable_id)
+                     ->where('a.tipo', '!=', 'DEVOLUCION')
+                     ->whereRaw('a.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = ai.id_bienes)');
+        });
     }
+
+    return $query;
+}
 
     public static function getPages(): array
     {

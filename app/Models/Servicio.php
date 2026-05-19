@@ -21,6 +21,9 @@ class Servicio extends Model
         'descripcion',
         'empresa',
         'tipo',
+        'fecha_inicio', 
+        'fecha_final',    
+        'porcentaje_avance',
     ];
 
     // Relación inversa: Un servicio puede estar en muchos contratos

@@ -20,6 +20,7 @@ class ServicioContrato extends Model
         'fecha_fin',
         'estado',
         'descripcion',
+        'fecha_pago',
     ];
 
     /**

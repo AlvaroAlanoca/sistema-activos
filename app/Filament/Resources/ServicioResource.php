@@ -58,6 +58,27 @@ public static function form(Form $form): Form
                         ->placeholder('Detalles adicionales sobre lo que provee esta empresa...')
                         ->rows(3)
                         ->columnSpanFull(),
+                        Forms\Components\DatePicker::make('fecha_inicio')
+                        ->label('Fecha de Inicio')
+                        ->native(false)
+                        ->displayFormat('d/m/Y')
+                        ->required(),
+
+                    Forms\Components\DatePicker::make('fecha_final')
+                        ->label('Fecha de Finalización')
+                        ->native(false)
+                        ->displayFormat('d/m/Y')
+                        ->required()
+                        ->after('fecha_inicio'), // Validación: no puede ser antes de la fecha de inicio
+
+                    Forms\Components\TextInput::make('porcentaje_avance')
+                        ->label('Porcentaje de Avance')
+                        ->numeric()
+                        ->default(0)
+                        ->minValue(0)
+                        ->maxValue(100)
+                        ->prefix('%')
+                        ->required(),
                 ])->columns(3), // Cambiamos a 3 columnas para que encajen perfecto los primeros campos
         ]);
 }

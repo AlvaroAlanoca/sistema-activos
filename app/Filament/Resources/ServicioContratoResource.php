@@ -67,6 +67,12 @@ public static function form(Form $form): Form
                         ])
                         ->default('pendiente')
                         ->required(),
+                            Forms\Components\DatePicker::make('fecha_pago')
+    ->label('Fecha del pago')
+    ->displayFormat('d/m/Y')
+    ->format('Y-m-d')
+    ->native(false)
+    ->required(),
                 ])->columns(2),
 
                 Forms\Components\Textarea::make('descripcion') 
@@ -81,6 +87,7 @@ public static function form(Form $form): Form
                         ->required(),
                     Forms\Components\DatePicker::make('fecha_fin')
                         ->required(),
+
                 ])->columns(2),
         ]);
 }
