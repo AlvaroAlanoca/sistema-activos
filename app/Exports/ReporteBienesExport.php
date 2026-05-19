@@ -26,79 +26,61 @@ public function __construct(array $filtros, string $generadoPor = 'Sistema')
 
 public function collection()
     {
-        $query = Acta::with([
-            'responsable.oficinaCargo.oficina', 
-            'responsable.oficinaCargo.cargo', 
-            'items.bien.tipoBien'
-        ])->whereIn('tipo', ['ENTREGA', 'TRANSFERENCIA INTERNA', 'DEVOLUCION']);
+        // Apuntamos directamente a ActaItem para cruzar la información exacta.
+        $query = \App\Models\ActaItem::query()
+            ->with([
+                'acta.responsable.oficinaCargo.oficina', 
+                'acta.responsable.oficinaCargo.cargo', 
+                'bien.tipoBien'
+            ])
+            ->select('acta_items.*') // CRUCIAL: Evita que el JOIN sobreescriba los datos del ítem
+            ->join('actas as a', 'a.idacta', '=', 'acta_items.id_acta')
+            // 1. EL FILTRO MAESTRO : Solo el ÚLTIMO movimiento de cada bien
+            ->whereRaw('a.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = acta_items.id_bienes)')
+            // 2. Si ese último movimiento fue una devolución, el bien está libre (no se reporta)
+            ->where('a.tipo', '!=', 'DEVOLUCION');
 
+        // 3. Filtro por Responsable (Si se seleccionó uno en el formulario)
+        if (!empty($this->filtros['responsable_id'])) {
+            $query->where('a.id_responsables', $this->filtros['responsable_id']);
+        }
 
-        // 1. Filtros de Fechas (Con Carbon)
+        // 4. Filtros de Fechas (Aplicados a la fecha de esa última acta)
         if (!empty($this->filtros['fecha_inicio'])) {
-            // Convierte la fecha recibida al formato seguro y al primer segundo del día (00:00:00)
             $fechaInicio = Carbon::parse($this->filtros['fecha_inicio'])->startOfDay();
-            $query->where('created_at', '>=', $fechaInicio);
+            $query->where('a.created_at', '>=', $fechaInicio);
         }
         
         if (!empty($this->filtros['fecha_fin'])) {
-            // Convierte la fecha recibida al formato seguro y al último segundo del día (23:59:59)
             $fechaFin = Carbon::parse($this->filtros['fecha_fin'])->endOfDay();
-            $query->where('created_at', '<=', $fechaFin);
-        }
-        
-        // 2. Filtro de Responsable
-        if (!empty($this->filtros['responsable_id'])) {
-            $query->where('id_responsables', $this->filtros['responsable_id']);
+            $query->where('a.created_at', '<=', $fechaFin);
         }
 
-        // 3. CASCADA DE BIENES (Inteligente)
-        // Busca desde lo más específico hasta lo más general usando elseif
+        // 5. CASCADA DE BIENES (Inteligente)
         if (!empty($this->filtros['bien_id'])) {
-            // Si eligió un bien específico, solo buscamos ese.
-            $query->whereHas('items', function ($q) {
-                $q->where('id_bienes', $this->filtros['bien_id']);
-            });
+            $query->where('acta_items.id_bienes', $this->filtros['bien_id']);
         } elseif (!empty($this->filtros['tipo_bien_id'])) {
-            // Si dejó el bien en blanco pero eligió un tipo, buscamos todos los de ese tipo.
-            $query->whereHas('items.bien', function ($q) {
+            $query->whereHas('bien', function ($q) {
                 $q->where('id_tipo_bien', $this->filtros['tipo_bien_id']);
             });
         } elseif (!empty($this->filtros['rubro_id'])) { 
-            // Si solo eligió el rubro, traemos todos los bienes de ese rubro.
-            $query->whereHas('items.bien.tipoBien', function ($q) {
+            $query->whereHas('bien.tipoBien', function ($q) {
                 $q->where('id_rubro', $this->filtros['rubro_id']); 
             });
         }
 
-        $actas = $query->get();
+        // Ejecutamos la consulta final
+        $itemsFiltrados = $query->get();
         $filasAplanadas = collect();
 
-        // Extraer los filtros de forma segura (usando '?? null' evitamos errores si el campo quedó en blanco)
-        $f_rubro = $this->filtros['rubro_id'] ?? null;
-        $f_tipo  = $this->filtros['tipo_bien_id'] ?? null;
-        $f_bien  = $this->filtros['bien_id'] ?? null;
-
-        foreach ($actas as $acta) {
-            foreach ($acta->items as $item) {
-                
-                // Si el filtro está vacío (empty), pasa automáticamente (true). 
-                // Si tiene datos, verifica que coincida exactamente.
-                $pasaFiltroRubro = empty($f_rubro) || 
-                                   ($item->bien && $item->bien->tipoBien && $item->bien->tipoBien->id_rubro == $f_rubro);
-                                   
-                $pasaFiltroTipo = empty($f_tipo) || 
-                                  ($item->bien && $item->bien->id_tipo_bien == $f_tipo);
-
-                $pasaFiltroBien = empty($f_bien) || 
-                                  ($item->id_bienes == $f_bien);
-
-                // Solo si cumple con los filtros que SÍ se llenaron, lo añadimos al reporte
-                if ($pasaFiltroRubro && $pasaFiltroTipo && $pasaFiltroBien) {
-                    $filasAplanadas->push([
-                        'acta' => $acta,
-                        'item' => $item,
-                    ]);
-                }
+        // Estructuramos la respuesta tal cual la espera tu método map()
+        foreach ($itemsFiltrados as $item) {
+            // Verificamos que la relación del acta no sea nula por seguridad
+            if ($item->acta) {
+                $filasAplanadas->push([
+                    'acta' => $item->acta,
+                    'item' => $item,
+                ]);
             }
         }
 

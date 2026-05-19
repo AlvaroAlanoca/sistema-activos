@@ -137,9 +137,22 @@ class ResponsableResource extends Resource
                         return $bienesReales;
                     })
                     ->badge() 
-                    ->sortable()
+                    //->sortable()
                     ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
-                    ->formatStateUsing(fn (int $state): string => $state > 0 ? "Tiene {$state} activo(s)" : 'Sin activos asignados'),
+                    ->formatStateUsing(fn (int $state): string => $state > 0 ? "Tiene {$state} activo(s)" : 'Sin activos asignados')
+                    ->sortable(query: function (\Illuminate\Database\Eloquent\Builder $query, string $direction) {
+        return $query->orderBy(
+            \Illuminate\Support\Facades\DB::table('acta_items')
+                ->selectRaw('COUNT(*)')
+                ->join('actas', 'actas.idacta', '=', 'acta_items.id_acta')
+                // Verifica que 'responsables' sea el nombre real de tu tabla en MySQL
+                // y 'idresponsables' sea su llave primaria.
+                ->whereColumn('actas.id_responsables', 'responsables.idresponsables') 
+                ->where('actas.tipo', '!=', 'DEVOLUCION')
+                ->whereRaw('actas.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = acta_items.id_bienes)'),
+            $direction
+        );})
+
             ])
             ->filters([
                 //
