@@ -120,6 +120,7 @@ public static function form(Form $form): Form
                     ->searchable(),     
                 Tables\Columns\TextColumn::make('porcentaje_avance')
                     ->label('% Avance')
+                    ->view('filament.tables.columns.progress-bar')
                     ->searchable(),            
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de Registro')

@@ -18,6 +18,10 @@ class ListServicios extends ListRecords
                 ->label('Reporte')
                 ->icon('heroicon-o-printer')
                 ->color('success')
+                ->extraAttributes([
+        'class' => 'rounded-full hover:scale-105 transition-transform shadow-lg',
+        'style' => 'background-color: #10B981 !important;' // Un verde más vibrante
+    ])
                 ->url(fn () => route('servicios.imprimir'), shouldOpenInNewTab: true),
 
             // BOTÓN ORIGINAL

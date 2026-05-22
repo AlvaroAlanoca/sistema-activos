@@ -14,7 +14,7 @@ class Dashboard extends BaseDashboard
 {
     protected static ?string $title = 'Panel de Control';
 
-    protected static ?string $navigationLabel = 'Panel de Control';
+  protected ?string $heading = '';
 
     protected static ?string $navigationIcon = 'heroicon-o-home';
 
