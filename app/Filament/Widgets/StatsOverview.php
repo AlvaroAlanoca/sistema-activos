@@ -8,24 +8,24 @@ use Illuminate\Support\Facades\Auth;
 
 class StatsOverview extends BaseWidget
 {
-    
-    protected function getStats(): array
+    protected static ?int $sort = 2;
+protected function getStats(): array
     {
         return [
-\Filament\Widgets\StatsOverviewWidget\Stat::make('Total Activos', \App\Models\Bien::count())
-            ->description('Bienes registrados')
-            ->descriptionIcon('heroicon-m-cube')
-            ->color('primary'),
-            
-        \Filament\Widgets\StatsOverviewWidget\Stat::make('Bienes Disponibles', \App\Models\Bien::where('estado', 'DISPONIBLE')->count())
-            ->description('Listos para entrega')
-            ->descriptionIcon('heroicon-m-check-badge')
-            ->color('success'),
-            
-        \Filament\Widgets\StatsOverviewWidget\Stat::make('Bienes Entregados', \App\Models\Bien::where('estado', 'ENTREGADO')->count())
-            ->description('En uso por funcionarios')
-            ->descriptionIcon('heroicon-m-users')
-            ->color('warning'),
+            Stat::make('Total Activos', '29') // Reemplaza '29' con Bien::count() para que sea real
+                ->description('Registrados en el sistema')
+                ->descriptionIcon('heroicon-m-chart-bar')
+                ->color('info'), // Azul claro
+
+            Stat::make('Bienes Disponibles', '16') // Reemplaza con Bien::where('estado', 'DISPONIBLE')->count()
+                ->description('Listos para asignación')
+                ->descriptionIcon('heroicon-m-check-badge')
+                ->color('success'), // Verde vibrante
+
+            Stat::make('Bienes Entregados', '13') // Reemplaza con Bien::where('estado', 'ENTREGADO')->count()
+                ->description('En custodia de funcionarios')
+                ->descriptionIcon('heroicon-m-user-group')
+                ->color('warning'), // Naranja vibrante
         ];
     }
         // Esta función oculta el widget si el usuario no es admin

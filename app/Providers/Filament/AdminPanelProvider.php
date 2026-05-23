@@ -27,9 +27,10 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
         ->font('Inter') // Una fuente más moderna
-        ->colors([
-            'primary' => \Filament\Support\Colors\Color::hex('#0891B2'), // El turquesa de la imagen
-        ])
+->colors([
+    'primary' => \Filament\Support\Colors\Color::hex('#06b6d4'), // Turquesa
+    // ... otros colores
+])
 ->renderHook(
     PanelsRenderHook::HEAD_END,
     fn (): string => Blade::render('
@@ -113,21 +114,167 @@ class AdminPanelProvider extends PanelProvider
     .fi-global-search {
     display: none !important;
 }
+/* ========================================= */
+/* 5. ESTILO DE LA BARRA SUPERIOR (TOPBAR)   */
+/* ========================================= */
+
+/* Forzar el fondo en la cabecera y en el nav interno */
+.fi-topbar,
+.fi-topbar nav {
+    background: linear-gradient(90deg, #06b6d4 0%, #06b6d4 100%) !important;
+    background-color: #06b6d4 !important; /* Respaldo */
+    border-bottom: none !important;
+}
+
+/* Sombras para separar del cuerpo */
+.fi-topbar {
+    box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Forzar que los íconos (hamburguesa, notificaciones) se vuelvan blancos */
+.fi-topbar .fi-icon-btn, 
+.fi-topbar .fi-topbar-item-icon {
+    color: #ffffff !important;
+}
+
+/* Quitar fondos grises al pasar el ratón por los botones de la barra superior */
+.fi-topbar .fi-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+    /* ========================================= */
+/* 6. ESTILIZAR Y CENTRAR GRÁFICOS           */
+/* ========================================= */
+
+/* Contenedor del gráfico: le damos un ancho máximo y lo centramos */
+.fi-wi-chart {
+    max-width: 600px !important; /* Tamaño ideal para una dona */
+    margin: 0 auto !important;   /* Centrado horizontal absoluto */
+}
+
+/* Estilizar la tarjeta que envuelve al gráfico */
+.fi-wi-chart .fi-section {
+    background-color: #ffffff !important;
+    border-radius: 2rem !important;
+    border: 1px solid #f1f5f9 !important;
+    padding: 1rem !important;
+}
+
+/* Título del gráfico */
+.fi-wi-chart .fi-section-header-heading {
+    text-align: center !important;
+    width: 100%;
+    font-size: 1.1rem !important;
+    color: #475569 !important;
+    margin-bottom: 1rem;
+}
+    /* ========================================= */
+/* 7. BOTONES DE ACCIÓN EN FORMULARIOS       */
+/* ========================================= */
+
+/* Contenedor inferior de los formularios */
+.fi-form-actions {
+    background-color: #f8fafc !important; /* Fondo sutil para enmarcar las acciones */
+    padding: 1rem 1.5rem !important;
+    border-radius: 1.25rem !important;
+    border: 1px solid #e2e8f0 !important;
+    margin-top: 1.75rem !important;
+}
+
+/* Configuración base para todos los botones del formulario (Formato Píldora) */
+.fi-form-actions .fi-btn {
+    border-radius: 9999px !important; 
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.75rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    transition: all 0.2s ease !important;
+}
+
+/* A. BOTÓN PRINCIPAL: "CREAR" / "GUARDAR" */
+.fi-form-actions .fi-btn.fi-color-primary {
+    background-color: #06b6d4 !important; /* Turquesa */
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px -2px rgba(6, 182, 212, 0.4) !important;
+}
+.fi-form-actions .fi-btn.fi-color-primary:hover {
+    background-color: #0891b2 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 15px -2px rgba(6, 182, 212, 0.6) !important;
+}
+
+/* B. BOTÓN SECUNDARIO: "CREAR Y CREAR OTRO" */
+/* Filament lo genera como un botón gris sin enlace. Lo capturamos y lo pintamos Slate */
+.fi-form-actions .fi-btn.fi-color-gray:not([href]) {
+    background-color: #475569 !important; /* Azul Slate */
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 12px -2px rgba(71, 85, 105, 0.3) !important;
+}
+.fi-form-actions .fi-btn.fi-color-gray:not([href]):hover {
+    background-color: #334155 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 15px -2px rgba(71, 85, 105, 0.5) !important;
+}
+
+/* C. BOTÓN DE RETORNO: "CANCELAR" */
+/* Filament lo renderiza como un enlace (etiqueta con atributo href) para volver atrás */
+.fi-form-actions .fi-btn[href] {
+    background-color: #f1f5f9 !important; /* Gris claro sutil */
+    color: #64748b !important; /* Texto Slate suave */
+    border: 1px solid #cbd5e1 !important;
+}
+.fi-form-actions .fi-btn[href]:hover {
+    background-color: #e2e8f0 !important;
+    color: #1e293b !important;
+    border-color: #94a3b8 !important;
+}
+/* ========================================= */
+/* 8. BOTONES DE CABECERA (Listados)         */
+/* ========================================= */
+
+/* Atrapamos cualquier botón dentro de la cabecera de la página */
+.fi-header .fi-btn,
+.fi-header-actions .fi-btn,
+.fi-actions .fi-btn.fi-color-primary {
+    border-radius: 9999px !important; /* Forma de píldora */
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.75rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    background-color: #06b6d4 !important; /* Turquesa SEDUCA */
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px -2px rgba(6, 182, 212, 0.4) !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+}
+
+/* Efecto al pasar el ratón */
+.fi-header .fi-btn:hover,
+.fi-header-actions .fi-btn:hover,
+.fi-actions .fi-btn.fi-color-primary:hover {
+    background-color: #0891b2 !important; /* Turquesa oscuro */
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px -2px rgba(6, 182, 212, 0.6) !important;
+}
         </style>
     ')
 )
 ->renderHook(
     \Filament\View\PanelsRenderHook::USER_MENU_BEFORE,
     fn (): string => \Illuminate\Support\Facades\Blade::render('
-        <div class="hidden sm:flex items-center gap-1 mr-4 text-xs text-slate-500 font-semibold tracking-wide uppercase">
-            Bienvenido/a, <span class="text-cyan-600 font-extrabold ml-1">{{ auth()->user()->name }}</span>
+        <div class="hidden sm:flex items-center gap-1 mr-4 text-xs text-white font-semibold tracking-wide uppercase">
+            Bienvenido/a, <span class="font-extrabold ml-1">{{ auth()->user()->name }}</span>
         </div>
     ')
 )
 ->renderHook(
     \Filament\View\PanelsRenderHook::TOPBAR_START,
     fn (): string => \Illuminate\Support\Facades\Blade::render('
-        <div class="hidden md:flex items-center text-lg font-black text-slate-800 tracking-wider uppercase ml-4">
+        <div class="hidden md:flex items-center text-lg font-black text-white tracking-wider uppercase ml-4">
             DIRECCIÓN DEPARTAMENTAL DE EDUCACIÓN LA PAZ
         </div>
     ')

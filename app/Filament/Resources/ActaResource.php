@@ -236,6 +236,8 @@ class ActaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->striped()
+        ->deferLoading()
             ->columns([
                 Tables\Columns\TextColumn::make('numero_acta')
                     ->label('Nro. de Acta')
