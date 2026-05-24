@@ -47,7 +47,7 @@ class ActaPolicy
      */
     public function delete(User $user, Acta $acta): bool
     {
-        return $user->can('delete_acta');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class ActaPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_acta');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class ActaPolicy
      */
     public function forceDelete(User $user, Acta $acta): bool
     {
-        return $user->can('force_delete_acta');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class ActaPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_acta');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class ActaPolicy
      */
     public function restore(User $user, Acta $acta): bool
     {
-        return $user->can('restore_acta');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class ActaPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_acta');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class ActaPolicy
      */
     public function replicate(User $user, Acta $acta): bool
     {
-        return $user->can('replicate_acta');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class ActaPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_acta');
+        return $user->can('{{ Reorder }}');
     }
 }

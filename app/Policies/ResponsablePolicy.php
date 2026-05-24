@@ -47,7 +47,7 @@ class ResponsablePolicy
      */
     public function delete(User $user, Responsable $responsable): bool
     {
-        return $user->can('delete_responsable');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class ResponsablePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_responsable');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class ResponsablePolicy
      */
     public function forceDelete(User $user, Responsable $responsable): bool
     {
-        return $user->can('force_delete_responsable');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class ResponsablePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_responsable');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class ResponsablePolicy
      */
     public function restore(User $user, Responsable $responsable): bool
     {
-        return $user->can('restore_responsable');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class ResponsablePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_responsable');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class ResponsablePolicy
      */
     public function replicate(User $user, Responsable $responsable): bool
     {
-        return $user->can('replicate_responsable');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class ResponsablePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_responsable');
+        return $user->can('{{ Reorder }}');
     }
 }

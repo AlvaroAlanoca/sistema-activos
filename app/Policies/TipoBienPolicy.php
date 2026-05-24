@@ -47,7 +47,7 @@ class TipoBienPolicy
      */
     public function delete(User $user, TipoBien $tipoBien): bool
     {
-        return $user->can('delete_tipo::bien');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class TipoBienPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_tipo::bien');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class TipoBienPolicy
      */
     public function forceDelete(User $user, TipoBien $tipoBien): bool
     {
-        return $user->can('force_delete_tipo::bien');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class TipoBienPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_tipo::bien');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class TipoBienPolicy
      */
     public function restore(User $user, TipoBien $tipoBien): bool
     {
-        return $user->can('restore_tipo::bien');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class TipoBienPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_tipo::bien');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class TipoBienPolicy
      */
     public function replicate(User $user, TipoBien $tipoBien): bool
     {
-        return $user->can('replicate_tipo::bien');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class TipoBienPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_tipo::bien');
+        return $user->can('{{ Reorder }}');
     }
 }

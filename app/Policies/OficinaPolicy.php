@@ -47,7 +47,7 @@ class OficinaPolicy
      */
     public function delete(User $user, Oficina $oficina): bool
     {
-        return $user->can('delete_oficina');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class OficinaPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_oficina');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class OficinaPolicy
      */
     public function forceDelete(User $user, Oficina $oficina): bool
     {
-        return $user->can('force_delete_oficina');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class OficinaPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_oficina');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class OficinaPolicy
      */
     public function restore(User $user, Oficina $oficina): bool
     {
-        return $user->can('restore_oficina');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class OficinaPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_oficina');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class OficinaPolicy
      */
     public function replicate(User $user, Oficina $oficina): bool
     {
-        return $user->can('replicate_oficina');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class OficinaPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_oficina');
+        return $user->can('{{ Reorder }}');
     }
 }

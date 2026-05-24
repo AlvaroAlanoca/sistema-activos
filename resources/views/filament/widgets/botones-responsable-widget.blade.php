@@ -1,80 +1,65 @@
 <x-filament-widgets::widget>
-    <x-filament::section>
-        <div class="flex flex-col gap-6">
-
-            {{-- 1. CABECERA: Alineada a la izquierda con línea divisoria --}}
-            <div class="pb-4 border-b border-gray-200 dark:border-gray-800">
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    ¡Hola, {{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()->name }}!
+    <div class="max-w-3xl mx-auto w-full mt-2 mb-6">
+        
+        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-6 md:p-10">
+            
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 border border-slate-100 mb-4 shadow-inner">
+                    <x-filament::icon icon="heroicon-o-user" class="w-8 h-8 text-slate-400" />
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight uppercase">
+                    ¡Bienvenido, {{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()->name ?? 'Funcionario' }}!
                 </h2>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Gestione los activos fijos bajo su custodia en el DDELPZ. ¿Qué desea hacer hoy?
+                <p class="text-slate-500 mt-2 text-[13px] font-medium">
+                    Centro de gestión de activos fijos. Seleccione una operación.
                 </p>
             </div>
 
-            {{-- 2. TARJETAS DE ACCIÓN: En 2 columnas para PC, 1 columna para celular --}}
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                
-                {{-- Tarjeta A: Consultar Activos --}}
-                <a href="{{ \App\Filament\Resources\BienResource::getUrl('index') }}" 
-                   class="relative flex items-center gap-4 p-5 transition-all bg-gray-50 border border-gray-200 rounded-xl hover:bg-white hover:shadow-md hover:border-blue-500 hover:ring-1 hover:ring-blue-500 group dark:bg-gray-800/50 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-blue-400">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+
+                <a href="{{ \App\Filament\Resources\BienResource::getUrl('index') }}" class="group relative flex items-center p-3.5 bg-white border border-slate-200 rounded-2xl hover:border-cyan-300 hover:shadow-lg hover:shadow-cyan-100/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
                     
-                    {{-- Icono --}}
-                    <div class="flex items-center justify-center w-12 h-12 transition-colors rounded-full shrink-0 bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-900/50 dark:text-blue-400">
-                        <x-heroicon-o-archive-box class="w-6 h-6" />
-                    </div>
-                    
-                    {{-- Texto --}}
-                    <div class="flex-1">
-                        <h3 class="text-base font-semibold text-gray-900 transition-colors dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                            Mis Activos Asignados
-                        </h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Verifique la lista de bienes bajo su custodia.
-                        </p>
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                    <div style="background-color: #06b6d4;" class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
+                        <x-filament::icon icon="heroicon-o-archive-box" class="w-5 h-5 text-white" />
                     </div>
 
-                    {{-- Flecha indicadora (Se mueve al pasar el mouse) --}}
-                    <div class="text-gray-400 transition-transform shrink-0 group-hover:translate-x-1 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                        <x-heroicon-m-chevron-right class="w-6 h-6" />
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-[13px] font-extrabold text-slate-700 group-hover:text-cyan-600 transition-colors uppercase tracking-wider">Mis Activos</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5 leading-tight">Ver inventario en custodia.</p>
                     </div>
+
+                    <x-filament::icon icon="heroicon-m-chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-cyan-500 group-hover:translate-x-1 transition-all" />
                 </a>
 
-                {{-- Tarjeta B: Realizar Transferencia --}}
-                <a href="{{ \App\Filament\Resources\BienResource::getUrl('index') }}" 
-                   class="relative flex items-center gap-4 p-5 transition-all bg-gray-50 border border-gray-200 rounded-xl hover:bg-white hover:shadow-md hover:border-orange-500 hover:ring-1 hover:ring-orange-500 group dark:bg-gray-800/50 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-orange-400">
+                <a href="{{ \App\Filament\Resources\BienResource::getUrl('index') }}" class="group relative flex items-center p-3.5 bg-white border border-slate-200 rounded-2xl hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
                     
-                    {{-- Icono --}}
-                    <div class="flex items-center justify-center w-12 h-12 transition-colors rounded-full shrink-0 bg-orange-100 text-orange-600 group-hover:bg-orange-600 group-hover:text-white dark:bg-orange-900/50 dark:text-orange-400">
-                        <x-heroicon-o-arrows-right-left class="w-6 h-6" />
-                    </div>
-                    
-                    {{-- Texto --}}
-                    <div class="flex-1">
-                        <h3 class="text-base font-semibold text-gray-900 transition-colors dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400">
-                            Realizar Transferencia
-                        </h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Traspase un activo fijo a otro funcionario.
-                        </p>
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                    <div style="background-color: #6366f1;" class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
+                        <x-filament::icon icon="heroicon-o-arrows-right-left" class="w-5 h-5 text-white" />
                     </div>
 
-                    {{-- Flecha indicadora --}}
-                    <div class="text-gray-400 transition-transform shrink-0 group-hover:translate-x-1 group-hover:text-orange-600 dark:group-hover:text-orange-400">
-                        <x-heroicon-m-chevron-right class="w-6 h-6" />
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-[13px] font-extrabold text-slate-700 group-hover:text-indigo-600 transition-colors uppercase tracking-wider">Transferencias</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5 leading-tight">Traspasar equipos a terceros.</p>
                     </div>
+
+                    <x-filament::icon icon="heroicon-m-chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
                 </a>
 
             </div>
-            
-            {{-- 3. CAJA DE INFORMACIÓN (Tip) --}}
-            <div class="flex items-start gap-3 p-4 mt-2 text-sm text-gray-700 bg-blue-50 rounded-xl dark:bg-gray-900 dark:text-gray-300 dark:border dark:border-gray-800">
-                <x-heroicon-m-information-circle class="w-5 h-5 mt-0.5 text-blue-500 shrink-0" />
-                <p>
-                    <strong>Tip rápido:</strong> Para transferir, ingrese a la opción, marque las casillas de los equipos deseados en la tabla y presione el botón <i>"Transferir Bienes"</i>.
+
+            <div class="bg-slate-50 rounded-2xl p-4 flex gap-3 items-start border border-slate-100">
+                <div class="mt-0.5">
+                    <x-filament::icon icon="heroicon-s-information-circle" class="w-5 h-5 text-slate-400" />
+                </div>
+                <p class="text-[12px] text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Tip rápido:</span> Para transferir, ingrese a la opción, marque las casillas de los equipos deseados en la tabla y presione el botón <span class="font-bold text-indigo-500">"Transferir Bienes"</span>.
                 </p>
             </div>
-            
+
         </div>
-    </x-filament::section>
+    </div>
 </x-filament-widgets::widget>

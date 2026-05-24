@@ -47,7 +47,7 @@ class RubroPolicy
      */
     public function delete(User $user, Rubro $rubro): bool
     {
-        return $user->can('delete_rubro');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class RubroPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_rubro');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class RubroPolicy
      */
     public function forceDelete(User $user, Rubro $rubro): bool
     {
-        return $user->can('force_delete_rubro');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class RubroPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_rubro');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class RubroPolicy
      */
     public function restore(User $user, Rubro $rubro): bool
     {
-        return $user->can('restore_rubro');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class RubroPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_rubro');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class RubroPolicy
      */
     public function replicate(User $user, Rubro $rubro): bool
     {
-        return $user->can('replicate_rubro');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class RubroPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_rubro');
+        return $user->can('{{ Reorder }}');
     }
 }

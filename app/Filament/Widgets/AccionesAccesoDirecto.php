@@ -3,11 +3,11 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\Widget;
-
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 class AccionesAccesoDirecto extends Widget
 {
     protected static string $view = 'filament.widgets.acciones-acceso-directo';
-
+use HasWidgetShield;
     // 1. Obliga al widget a ocupar todo el ancho disponible (salto de línea)
     protected int | string | array $columnSpan = 'full';
 

@@ -47,7 +47,7 @@ class ServicioPolicy
      */
     public function delete(User $user, Servicio $servicio): bool
     {
-        return $user->can('delete_servicio');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class ServicioPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_servicio');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class ServicioPolicy
      */
     public function forceDelete(User $user, Servicio $servicio): bool
     {
-        return $user->can('force_delete_servicio');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class ServicioPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_servicio');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class ServicioPolicy
      */
     public function restore(User $user, Servicio $servicio): bool
     {
-        return $user->can('restore_servicio');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class ServicioPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_servicio');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class ServicioPolicy
      */
     public function replicate(User $user, Servicio $servicio): bool
     {
-        return $user->can('replicate_servicio');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class ServicioPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_servicio');
+        return $user->can('{{ Reorder }}');
     }
 }

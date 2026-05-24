@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\ChartWidget;
 // Importamos los modelos para que los datos sean reales
 use App\Models\Bien;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class EstadoBienesChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Estado Patrimonial de Activos';
     
     // Lo mantenemos en su propia fila

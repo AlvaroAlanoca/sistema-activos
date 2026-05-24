@@ -47,7 +47,7 @@ class ServicioContratoPolicy
      */
     public function delete(User $user, ServicioContrato $servicioContrato): bool
     {
-        return $user->can('delete_servicio::contrato');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class ServicioContratoPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_servicio::contrato');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class ServicioContratoPolicy
      */
     public function forceDelete(User $user, ServicioContrato $servicioContrato): bool
     {
-        return $user->can('force_delete_servicio::contrato');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class ServicioContratoPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_servicio::contrato');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class ServicioContratoPolicy
      */
     public function restore(User $user, ServicioContrato $servicioContrato): bool
     {
-        return $user->can('restore_servicio::contrato');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class ServicioContratoPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_servicio::contrato');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class ServicioContratoPolicy
      */
     public function replicate(User $user, ServicioContrato $servicioContrato): bool
     {
-        return $user->can('replicate_servicio::contrato');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class ServicioContratoPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_servicio::contrato');
+        return $user->can('{{ Reorder }}');
     }
 }

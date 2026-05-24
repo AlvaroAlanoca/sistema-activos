@@ -27,10 +27,11 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
         ->font('Inter') // Una fuente más moderna
-->colors([
-    'primary' => \Filament\Support\Colors\Color::hex('#06b6d4'), // Turquesa
+        ->colors([
+        'primary' => \Filament\Support\Colors\Color::hex('#06b6d4'), // Turquesa
     // ... otros colores
 ])
+->darkMode(false)
 ->renderHook(
     PanelsRenderHook::HEAD_END,
     fn (): string => Blade::render('

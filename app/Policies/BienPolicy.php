@@ -47,7 +47,7 @@ class BienPolicy
      */
     public function delete(User $user, Bien $bien): bool
     {
-        return $user->can('delete_bien');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class BienPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_bien');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class BienPolicy
      */
     public function forceDelete(User $user, Bien $bien): bool
     {
-        return $user->can('force_delete_bien');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class BienPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_bien');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class BienPolicy
      */
     public function restore(User $user, Bien $bien): bool
     {
-        return $user->can('restore_bien');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class BienPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_bien');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class BienPolicy
      */
     public function replicate(User $user, Bien $bien): bool
     {
-        return $user->can('replicate_bien');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class BienPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_bien');
+        return $user->can('{{ Reorder }}');
     }
 }

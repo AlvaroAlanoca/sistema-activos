@@ -47,7 +47,7 @@ class CargoPolicy
      */
     public function delete(User $user, Cargo $cargo): bool
     {
-        return $user->can('delete_cargo');
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class CargoPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_cargo');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class CargoPolicy
      */
     public function forceDelete(User $user, Cargo $cargo): bool
     {
-        return $user->can('force_delete_cargo');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class CargoPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_cargo');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class CargoPolicy
      */
     public function restore(User $user, Cargo $cargo): bool
     {
-        return $user->can('restore_cargo');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class CargoPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_cargo');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class CargoPolicy
      */
     public function replicate(User $user, Cargo $cargo): bool
     {
-        return $user->can('replicate_cargo');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class CargoPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_cargo');
+        return $user->can('{{ Reorder }}');
     }
 }
