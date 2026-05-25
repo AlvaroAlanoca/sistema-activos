@@ -54,19 +54,47 @@ Tables\Actions\Action::make('aprobar')
     ->icon('heroicon-o-check-circle')
     ->color('success')
     ->visible(fn ($record) => $record->estado === 'PENDIENTE')
+    // 👇 1. ACTIVAMOS LA VENTANA MODAL DE CONFIRMACIÓN 👇
+    ->requiresConfirmation()
+    ->modalHeading('Revisión de la Solicitud')
+    ->modalWidth('md')
+    ->modalSubmitActionLabel('Sí, Aprobar y Continuar')
+    ->modalCancelActionLabel('Cancelar')
+    // 👇 2. INYECTAMOS EL HTML CON LOS DATOS DEL FUNCIONARIO 👇
+    ->modalDescription(function (\App\Models\Solicitud $record) {
+        $nombre = $record->responsable?->nombre_apellido ?? 'Desconocido';
+        $motivo = $record->motivo ?? 'Sin justificación detallada.';
+        
+        return new \Illuminate\Support\HtmlString(
+            "<div class='space-y-3 text-sm text-left mt-4'>
+                <p>
+                    <strong class='text-slate-800 dark:text-slate-200'>Funcionario Solicitante:</strong><br>
+                    <span class='text-slate-600 dark:text-slate-400'>{$nombre}</span>
+                </p>
+                <div class='p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg'>
+                    <strong class='text-slate-800 dark:text-slate-200'>Justificación / Motivo:</strong><br>
+                    <span class='text-slate-600 dark:text-slate-400 italic'>\"{$motivo}\"</span>
+                </div>
+                <p class='text-slate-700 dark:text-slate-300 font-medium mt-4 pt-2'>
+                    ¿Confirma que desea aprobar esta petición y ser redirigido para crear el Acta de Entrega?
+                </p>
+            </div>"
+        );
+    })
+    // 👇 3. LA ACCIÓN SE EJECUTA SOLO SI PRESIONA "SÍ, APROBAR" 👇
     ->action(function ($record) {
-        // 1. Cambiamos los estados en la base de datos
+        // Cambiamos los estados en la base de datos
         $record->update(['estado' => 'APROBADA']);
         $record->bien->update(['estado' => 'DISPONIBLE']); 
         
-        // 2. Mostramos la alerta
+        // Mostramos la alerta flotante
         \Filament\Notifications\Notification::make()
             ->success()
-            ->title('Aprobada')
-            ->body('Solicitud aprobada. Proceda a formalizar el Acta de Entrega.')
+            ->title('Aprobación Exitosa')
+            ->body('La solicitud fue aprobada. Proceda a formalizar el Acta.')
             ->send();
 
-        // 3. REDIRECCIÓN INTERNA: Esto fuerza a que el código de arriba se ejecute primero
+        // REDIRECCIÓN INTERNA hacia el formulario con los datos pre-cargados
         return redirect(\App\Filament\Resources\ActaResource::getUrl('create', [
             'responsable_id' => $record->responsable_id,
             'bien_id' => $record->bien_id,
