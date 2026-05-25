@@ -35,7 +35,6 @@ class BienResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            
             // SECCIÓN REACTIVA: CLASIFICACIÓN Y CODIFICACIÓN
             \Filament\Forms\Components\Section::make('Clasificación y Codificación')
                 ->description('Asigne el tipo de bien y correlativo. El código patrimonial se generará automáticamente.')
@@ -89,13 +88,13 @@ class BienResource extends Resource
                         ->prefix('Bs.') 
                         ->maxValue(99999999.99)
                         ->nullable(),    
-// ¡AQUÍ ESTÁ EL CAMBIO! Usamos DatePicker en lugar de TextInput
-Forms\Components\DatePicker::make('fecha_compra')
-    ->label('Fecha de la compra')
-    ->displayFormat('d/m/Y')
-    ->format('Y-m-d')
-    ->native(false)
-    ->required(),
+                        
+                    Forms\Components\DatePicker::make('fecha_compra')
+                        ->label('Fecha de la compra')
+                        ->displayFormat('d/m/Y')
+                        ->format('Y-m-d')
+                        ->native(false)
+                        ->required(),
                 ])->columns(2),
 
             // SECCIÓN: DETALLES Y ESTADO
@@ -151,13 +150,13 @@ Forms\Components\DatePicker::make('fecha_compra')
                     ->label('Rubro Presupuestario')
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
+                    
                 Tables\Columns\TextColumn::make('fecha_compra')
                     ->label('Fecha Adquisición')
                     ->color('gray')
                     ->searchable()
                     ->sortable()
                     ->date(),
-                    
 
                 Tables\Columns\TextColumn::make('estado')
                     ->label('Estado')
@@ -169,6 +168,7 @@ Forms\Components\DatePicker::make('fecha_compra')
                         'MANTENIMIENTO' => 'warning',
                         default => 'gray',
                     }),
+                    
                 Tables\Columns\TextColumn::make('costo')
                     ->label('Costo')
                     ->money('BOB') 
@@ -197,12 +197,50 @@ Forms\Components\DatePicker::make('fecha_compra')
                         $user = Auth::user();
                         return $user && $user->hasRole('responsable');
                     }),
-                   // Tables\Actions\DeleteAction::make()
-                    //->hidden(function () {
-                      //  /** @var \App\Models\User|null $user */
-                       // $user = Auth::user();
-                    //return $user && $user->hasRole('responsable');
-                    //}),
+                    
+                // ACCIÓN NUEVA: Solicitar Asignación (Solo Responsables)
+                Tables\Actions\Action::make('solicitar')
+                    ->label('Solicitar Asignación')
+                    ->icon('heroicon-o-hand-raised')
+                    ->color('primary')
+                    ->visible(function (Bien $record) {
+                        /** @var \App\Models\User|null $user */
+                        $user = Auth::user();
+                        return $user && $user->hasRole('responsable') && $record->estado === 'DISPONIBLE';
+                    })
+                    ->form([
+                        \Filament\Forms\Components\Textarea::make('motivo')
+                            ->label('Motivo / Justificación de la Solicitud')
+                            ->required()
+                            ->placeholder('Explique para qué área o función requiere este activo fijo...'),
+                    ])
+                    ->action(function (Bien $record, array $data) {
+                        
+                        // 1. Crear y atrapar la solicitud
+                        $solicitud = \App\Models\Solicitud::create([
+                            'bien_id' => $record->getKey(),
+                            'responsable_id' => Auth::user()->responsable_id,
+                            'estado' => 'PENDIENTE',
+                            'motivo' => $data['motivo'],
+                        ]);
+
+                        // 2. Cambiar estado temporal
+                        $record->update(['estado' => 'MANTENIMIENTO']); 
+
+                        // 3. Notificar con botón de PDF
+                        \Filament\Notifications\Notification::make()
+                            ->success()
+                            ->title('Petición Enviada')
+                            ->body('Su solicitud fue enviada con éxito. Puede descargar su registro de control aquí.')
+                            ->actions([
+                                \Filament\Notifications\Actions\Action::make('imprimir_comprobante')
+                                    ->label('Descargar PDF')
+                                    ->button()
+                                    ->color('danger')
+                                    ->url(route('solicitud.imprimir', $solicitud), shouldOpenInNewTab: true),
+                            ])
+                            ->send();
+                    }),
             ])
             // FUNCION DE TRANSFERIR (Acción Masiva)
             ->bulkActions([
@@ -242,7 +280,6 @@ Forms\Components\DatePicker::make('fecha_compra')
                                 \Filament\Forms\Components\Select::make('id_receptor')
                                     ->label('Buscar Funcionario (Apellidos y Nombres)')
                                     ->options(function () {
-                                        // NUEVO: Buscar admins con Spatie para excluirlos
                                         $adminIds = \App\Models\User::whereHas('roles', function($q) {
                                                 $q->whereIn('name', ['admin', 'super_admin']);
                                             })
@@ -332,31 +369,46 @@ Forms\Components\DatePicker::make('fecha_compra')
                     })
                     ->deselectRecordsAfterCompletion(),
             ])
+            // RESTRICCIÓN DE SELECCIÓN PARA RESPONSABLES (Seguridad)
+            ->checkIfRecordIsSelectableUsing(function (Bien $record) {
+                /** @var \App\Models\User|null $user */
+                $user = Auth::user();
+                
+                if ($user && $user->hasRole('responsable') && !$user->hasRole('admin') && !$user->hasRole('super_admin')) {
+                    // No pueden seleccionar bienes de la pestaña de catálogo (DISPONIBLES) para transferirlos
+                    return $record->estado !== 'DISPONIBLE'; 
+                }
+                
+                return true;
+            })
             ->defaultSort('codigo', 'asc');
     }
 
-public static function getEloquentQuery(): Builder
-{
-    // 1. Filtro Global: Excluimos de raíz todos los bienes con estado 'DE BAJA'
-    $query = parent::getEloquentQuery()->where('estado', '!=', 'DE BAJA');
-    
-    /** @var \App\Models\User|null $user */
-    $user = Auth::user();
+    public static function getEloquentQuery(): Builder
+    {
+        // 1. Filtro Global: Excluimos de raíz todos los bienes con estado 'DE BAJA'
+        $query = parent::getEloquentQuery()->where('estado', '!=', 'DE BAJA');
+        
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
 
-    // 2. Tu lógica existente para restringir la vista al rol 'responsable'
-    if ($user && $user->hasRole('responsable') && !$user->hasRole('super_admin') && !$user->hasRole('admin')) {
-        $query->whereIn('idbienes', function ($subquery) use ($user) {
-            $subquery->select('ai.id_bienes')
-                     ->from('acta_items as ai')
-                     ->join('actas as a', 'a.idacta', '=', 'ai.id_acta')
-                     ->where('a.id_responsables', $user->responsable_id)
-                     ->where('a.tipo', '!=', 'DEVOLUCION')
-                     ->whereRaw('a.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = ai.id_bienes)');
-        });
+        // 2. Modificación lógica: Responsables ven sus activos Y el catálogo disponible
+        if ($user && $user->hasRole('responsable') && !$user->hasRole('super_admin') && !$user->hasRole('admin')) {
+            $query->where(function ($q) use ($user) {
+                $q->whereIn('idbienes', function ($subquery) use ($user) {
+                    $subquery->select('ai.id_bienes')
+                             ->from('acta_items as ai')
+                             ->join('actas as a', 'a.idacta', '=', 'ai.id_acta')
+                             ->where('a.id_responsables', $user->responsable_id)
+                             ->where('a.tipo', '!=', 'DEVOLUCION')
+                             ->whereRaw('a.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = ai.id_bienes)');
+                })
+                ->orWhere('estado', 'DISPONIBLE');
+            });
+        }
+
+        return $query;
     }
-
-    return $query;
-}
 
     public static function getPages(): array
     {

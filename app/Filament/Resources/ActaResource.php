@@ -99,7 +99,9 @@ class ActaResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->live(), 
+                            ->live() 
+
+                            ->default(fn () => request()->query('responsable_id')),
 
                         Forms\Components\Grid::make(4) 
                             ->schema([
@@ -183,6 +185,20 @@ class ActaResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship('items')
+                            ->default(function () {
+        $bienId = request()->query('bien_id');
+        
+        if ($bienId) {
+            return [
+                [
+                    'id_bienes' => $bienId,
+                    'estado' => 'Bueno', // Estado inicial sugerido para la asignación
+                ]
+            ];
+        }
+        
+        return [];
+    })
                             ->schema([
                                 Forms\Components\Select::make('id_bienes')
                                     ->label('Búsqueda (Código o Descripción)')

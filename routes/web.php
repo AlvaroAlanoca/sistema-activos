@@ -78,4 +78,32 @@ Route::get('/servicios/imprimir', function () {
     // 3. Mostramos el PDF
     return $pdf->stream("Reporte_Servicios_DDELPZ.pdf");
 
+
+    
 })->name('servicios.imprimir')->middleware('auth');
+    Route::get('/solicitud/{solicitud}/imprimir', function (App\Models\Solicitud $solicitud) {
+    
+    // 1. Cargamos las relaciones para evitar consultas N+1 en la vista PDF
+    $solicitud->load([
+        'responsable.oficinaCargo.oficina', 
+        'responsable.oficinaCargo.cargo', 
+        'bien.tipoBien'
+    ]);
+
+    // 2. Definimos quién es el solicitante
+    $solicitante = $solicitud->responsable;
+
+    // 3. Formateamos un número de control (Ej: SOL-00015-2026)
+    $numeroSolicitud = 'SOL-' . str_pad($solicitud->id, 5, '0', STR_PAD_LEFT) . '-' . $solicitud->created_at->format('Y');
+
+    // 4. Renderizamos la vista PDF
+    $pdf = Pdf::loadView('pdf.solicitud', [
+        'solicitud' => $solicitud,
+        'solicitante' => $solicitante,
+        'numero_solicitud' => $numeroSolicitud,
+    ]);
+
+    // 5. Mostramos el PDF
+    return $pdf->stream("Comprobante_{$numeroSolicitud}.pdf");
+
+})->name('solicitud.imprimir')->middleware('auth');
