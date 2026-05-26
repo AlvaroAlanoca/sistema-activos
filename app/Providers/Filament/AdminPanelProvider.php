@@ -27,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
         ->font('Inter') // Una fuente más moderna
+        ->profile()
         ->colors([
         'primary' => \Filament\Support\Colors\Color::hex('#06b6d4'), // Turquesa
     // ... otros colores
