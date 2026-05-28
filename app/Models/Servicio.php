@@ -24,6 +24,14 @@ class Servicio extends Model
         'fecha_inicio', 
         'fecha_final',    
         'porcentaje_avance',
+        'tipo_servicio',
+        'convocatoria',
+        'documento_base',
+        'acta_apertura',
+        'resolucion_adjudicacion',
+        'informe',
+        'cantidad_litros',
+        'monto',
     ];
 
     // Relación inversa: Un servicio puede estar en muchos contratos

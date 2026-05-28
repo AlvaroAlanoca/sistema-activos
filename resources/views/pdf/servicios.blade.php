@@ -2,89 +2,141 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Servicios</title>
+    <title>Reporte General de Servicios - DDELPZ</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11px; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; margin: 0; padding: 0; }
         
-        /* Estilos de la nueva cabecera */
-        .encabezado-tabla {
-            width: 100%;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #1E3A8A; /* Línea azul institucional */
-            padding-bottom: 15px;
-        }
-        .encabezado-tabla td {
-            border: none; /* Quitamos los bordes solo para esta tabla */
-            padding: 0;
-            vertical-align: middle;
-        }
-        .titulo { font-size: 16px; font-weight: bold; color: #1E3A8A; }
-        .subtitulo { font-size: 12px; font-weight: bold; margin-top: 5px; }
+        /* ENCABEZADO INSTITUCIONAL */
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .header-table td { border-bottom: 3px solid #1e3a8a; padding-bottom: 10px; }
+        .logo-cell { width: 20%; vertical-align: middle; }
+        .title-cell { width: 80%; text-align: right; vertical-align: bottom; }
+        .institucion { color: #1e3a8a; margin: 0; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+        .titulo-reporte { margin: 5px 0 0 0; font-size: 12px; font-weight: bold; color: #475569; uppercase; }
+
+        /* METADATOS DEL REPORTE */
+        .meta-table { width: 100%; margin-bottom: 15px; font-size: 9px; }
         
-        /* Estilos de la tabla de datos */
-        .tabla-datos { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .tabla-datos th, .tabla-datos td { border: 1px solid #444; padding: 6px; text-align: left; }
-        .tabla-datos th { background-color: #f3f4f6; font-weight: bold; font-size: 12px; }
+        /* TABLA PRINCIPAL DE REGISTROS */
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .report-table th { background-color: #f1f5f9; color: #1e293b; padding: 6px 4px; border: 1px solid #cbd5e1; font-weight: bold; font-size: 9px; text-transform: uppercase; }
+        .report-table td { padding: 6px 4px; border: 1px solid #e2e8f0; vertical-align: middle; }
         
-        .badge-ddelpz { color: #059669; font-weight: bold; }
-        .badge-sicoes { color: #d97706; font-weight: bold; }
-                .footer-date { text-align: right; font-size: 9pt; margin-top: 40px; border-top: 1px solid #bdc3c7; padding-top: 5px; }
+        /* ESTILOS DE TEXTO Y COLORES */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .text-primary { color: #1e3a8a; }
+        
+        /* COMPONENTES VISUALES COMPACTOS */
+        .badge-origen { padding: 2px 5px; border-radius: 3px; font-weight: bold; font-size: 8px; color: white; }
+        .bg-ddelpz { background-color: #10b981; }
+        .bg-sicoes { background-color: #f59e0b; }
+        
+        .doc-tag { display: inline-block; background-color: #e2e8f0; color: #334155; padding: 1px 3px; border-radius: 2px; font-size: 7px; margin: 1px; font-weight: bold; }
+
+        .footer { text-align: right; font-size: 8px; margin-top: 20px; border-top: 1px solid #cbd5e1; padding-top: 5px; color: #64748b; }
     </style>
 </head>
 <body>
 
-    <table class="encabezado-tabla">
+    <table class="header-table">
         <tr>
-            <td width="20%">
-                <img src="{{ public_path('img/logo.png') }}" width="90" alt="Logo">
+            <td class="logo-cell">
+                <img src="{{ public_path('img/logo.png') }}" style="height: 50px; width: auto;" alt="Logo">
             </td>
-            
-            <td width="60%" style="text-align: center;">
-                <div class="titulo">SISTEMA DE CONTROL DE ACTIVOS FIJOS DDELPZ</div>
-                <div class="subtitulo">REPORTE GENERAL: CATÁLOGO DE SERVICIOS Y CONTRATOS</div>
-            </td>
-            
-            <td width="20%" style="text-align: right; font-size: 10px; color: #555;">
-                Generado el:<br>
-                <strong>{{ $fecha_generacion }}</strong>
+            <td class="title-cell">
+                <h2 class="institucion">DIRECCIÓN DEPARTAMENTAL DE EDUCACIÓN LA PAZ</h2>
+                <p class="titulo-reporte">REPORTE GENERAL DE CONTRATOS Y SERVICIOS</p>
             </td>
         </tr>
     </table>
 
-    <table class="tabla-datos">
+    <table class="meta-table">
+        <tr>
+            <td><strong>Fecha de Generación:</strong> {{ $fecha_generacion }}</td>
+            <td style="text-align: right;"><strong>Total Registros:</strong> {{ $servicios->count() }}</td>
+        </tr>
+    </table>
+
+    <table class="report-table">
         <thead>
             <tr>
-                <th width="8%">Origen</th>
-                <th width="15%">CUCE</th>
-                <th width="20%">Empresa Proveedora</th>
-                <th width="27%">Descripción</th>
-                <th width="10%">F. Inicio</th>
-                <th width="10%">F. Final</th>
-                <th width="10%">% Avance</th>
+                <th style="width: 6%;">Origen</th>
+                <th style="width: 12%;">Tipo de Servicio</th>
+                <th style="width: 10%;">CUCE / Código</th>
+                <th style="width: 15%;">Empresa Proveedora</th>
+                <th style="width: 21%;">Descripción General</th>
+                <th style="width: 6%;">Litros</th>
+                <th style="width: 8%;">Monto Total</th>
+                <th style="width: 6%;">Avance</th>
+                <th style="width: 16%;">Respaldos Digitales</th>
             </tr>
         </thead>
         <tbody>
             @foreach($servicios as $servicio)
             <tr>
-                <td class="{{ $servicio->tipo === 'DDELPZ' ? 'badge-ddelpz' : 'badge-sicoes' }}">
-                    {{ $servicio->tipo }}
+                <td class="text-center">
+                    <span class="badge-origen {{ $servicio->tipo === 'DDELPZ' ? 'bg-ddelpz' : 'bg-sicoes' }}">
+                        {{ $servicio->tipo }}
+                    </span>
                 </td>
-                <td>{{ $servicio->cuce }}</td>
-                <td>{{ $servicio->empresa }}</td>
-                <td>{{ Str::limit($servicio->descripcion, 80) }}</td>
-                <td>{{ $servicio->fecha_inicio }}</td>
-                <td>{{ $servicio->fecha_final }}</td>
-                <td style="text-align: center;">{{ $servicio->porcentaje_avance ?? '0' }}%</td>
+                
+                <td>
+                    @if($servicio->tipo === 'DDELPZ' && $servicio->tipo_servicio)
+                        {{ match($servicio->tipo_servicio) {
+                            'COMBUSTIBLE' => 'Combustible',
+                            'MANTENIMIENTO' => 'Mantenimiento',
+                            'SEGUROS' => 'Seguros',
+                            'CONSULTORIA' => 'Consultoría',
+                            'OTROS' => 'Otros',
+                            default => $servicio->tipo_servicio
+                        } }}
+                    @else
+                        <span style="color: #94a3b8; font-style: italic;">No aplica (SICOES)</span>
+                    @endif
+                </td>
+                
+                <td class="text-center bold text-primary">{{ $servicio->cuce }}</td>
+                
+                <td class="bold">{{ $servicio->empresa }}</td>
+                
+                <td>{{ \Illuminate\Support\Str::limit($servicio->descripcion, 65) }}</td>
+                
+                <td class="text-center bold">
+                    @if($servicio->tipo_servicio === 'COMBUSTIBLE' && $servicio->cantidad_litros)
+                        {{ number_format($servicio->cantidad_litros, 0) }} Lts.
+                    @else
+                        <span style="color: #cbd5e1;">--</span>
+                    @endif
+                </td>
+                
+                <td class="text-right bold">Bs. {{ number_format($servicio->monto, 2) }}</td>
+                
+                <td class="text-center bold">{{ $servicio->porcentaje_avance }}%</td>
+                
+                <td>
+                    @php $tieneDocs = false; @endphp
+                    
+                    @if($servicio->convocatoria) <span class="doc-tag">CONV</span> @php $tieneDocs = true; @endphp @endif
+                    @if($servicio->documento_base) <span class="doc-tag">DBC</span> @php $tieneDocs = true; @endphp @endif
+                    @if($servicio->acta_apertura) <span class="doc-tag">ACTA</span> @php $tieneDocs = true; @endphp @endif
+                    @if($servicio->resolucion_adjudicacion) <span class="doc-tag">RES</span> @php $tieneDocs = true; @endphp @endif
+                    @if($servicio->informe) <span class="doc-tag">INF</span> @php $tieneDocs = true; @endphp @endif
+                    
+                    @if(!$tieneDocs)
+                        <span style="color: #cbd5e1; font-style: italic;">Sin archivos</span>
+                    @endif
+                </td>
             </tr>
             @endforeach
         </tbody>
     </table>
-<div class="footer-date">
-        <p>
-                {{-- Aqui esta la impresion de usuario --}}
-            Generado por: <strong>{{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()?->name ?? 'Sistema' }}</strong> 
-            | Sistema DDELPZ - {{ now()->format('d/m/Y H:i') }}
-        </p>
+
+    <div class="footer">
+        Generado por: <strong>{{ auth()->user()?->responsable?->nombre_apellido ?? auth()->user()?->name ?? 'Sistema' }}</strong> 
+        | Portal de Control de Activos y Contratos DDELPZ
     </div>
+
 </body>
 </html>

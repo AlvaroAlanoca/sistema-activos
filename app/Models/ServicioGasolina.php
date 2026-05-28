@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ServicioGasolina extends Model
+{
+    protected $table = 'servicio_gasolina';
+    protected $primaryKey = 'idservicio_gasolina';
+
+    protected $fillable = [
+        'id_user',
+        'id_servicio',
+        'fecha_vale',
+        'placa',
+        'cantidad_litros',
+    ];
+
+    /**
+     * Relación con el Usuario que registra el vale
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id_user');
+    }
+
+    /**
+     * Relación con el Contrato/Servicio de origen
+     */
+    public function servicio(): BelongsTo
+    {
+        return $this->belongsTo(Servicio::class, 'id_servicio');
+    }
+}
