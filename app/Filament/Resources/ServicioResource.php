@@ -170,28 +170,19 @@ public static function form(Form $form): Form
                     ->sortable()
                     ->badge()
                     ->color('info'), 
-                    
+                Tables\Columns\TextColumn::make('descripcion')
+                    ->label('Descripcion Servicio')
+                    ->searchable()
+                    ->limit(20)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('empresa')
                     ->label('Empresa Proveedora')
                     ->searchable()
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('cantidad_litros')
-                    ->label('Litros')
-                    ->numeric()
-                    ->sortable()
-                    ->placeholder('--'),
-
                 Tables\Columns\TextColumn::make('monto')
                     ->label('Monto')
                     ->money('BOB')
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('porcentaje_avance')
-                    ->label('% Avance')
-                    ->view('filament.tables.columns.progress-bar')
-                    ->searchable(), 
-
                 // =========================================================================
                 // COLUMNAS INTERACTIVAS PARA DESCARGAR LOS BINARIOS (LONGBLOB)
                 // =========================================================================
@@ -200,7 +191,6 @@ public static function form(Form $form): Form
                 self::crearColumnaDescargaBlob('acta_apertura', 'Acta Apertura'),
                 self::crearColumnaDescargaBlob('resolucion_adjudicacion', 'Res. Adjudicación'),
                 self::crearColumnaDescargaBlob('informe', 'Informe'),
-
                 Tables\Columns\TextColumn::make('fecha_inicio')
                     ->label('Fecha Inicio')
                     ->toggleable(isToggledHiddenByDefault: true),      
@@ -212,6 +202,22 @@ public static function form(Form $form): Form
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('cantidad_litros')
+                    ->label('Litros')
+                    ->numeric()
+                    ->sortable()
+                    ->placeholder('--'),
+
+
+
+                Tables\Columns\TextColumn::make('porcentaje_avance')
+                    ->label('% Avance')
+                    ->view('filament.tables.columns.progress-bar')
+                    ->searchable(), 
+
+
+
+
             ])
             ->filters([
                 //

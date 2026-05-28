@@ -119,10 +119,12 @@ class ServicioGasolinaResource extends Resource
                     ->label('CUCE Contrato')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('user.name')
-                    ->label('Registrado Por')
+                Tables\Columns\TextColumn::make('user.responsable.nombre_apellido')
+                    ->label('Funcionario (Registrado Por)')
                     ->color('gray')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable()
+                    ->default('Administrador del Sistema'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha Registro Sistema')
