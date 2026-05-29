@@ -14,8 +14,9 @@ class ServicioGasolina extends Model
         'id_user',
         'id_servicio',
         'fecha_vale',
-        'placa',
+        'id_vehiculo',
         'cantidad_litros',
+        'nro_vale',
     ];
 
     /**
@@ -32,5 +33,9 @@ class ServicioGasolina extends Model
     public function servicio(): BelongsTo
     {
         return $this->belongsTo(Servicio::class, 'id_servicio');
+    }
+    public function vehiculo(): BelongsTo
+    {
+        return $this->belongsTo(Vehiculo::class, 'id_vehiculo');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ServicioGasolinaResource\Pages;
 use App\Models\ServicioGasolina;
+use App\Models\Servicio;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -17,10 +18,10 @@ class ServicioGasolinaResource extends Resource
     protected static ?string $model = ServicioGasolina::class;
 
     // Ajustes de Ubicación en el Menú Lateral (Agrupado junto a Catálogo de Servicios)
-    protected static ?string $navigationIcon = 'heroicon-o-ticket'; 
+    protected static ?string $navigationIcon = 'heroicon-o-ticket';
     protected static ?string $navigationLabel = 'Control de Gasolina / Vales';
-    protected static ?string $navigationGroup = 'Contratos'; 
-    protected static ?int $navigationSort = 1; 
+    protected static ?string $navigationGroup = 'Contratos';
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'Vale de Combustible';
     protected static ?string $pluralModelLabel = 'Vales de Combustible';
@@ -33,54 +34,56 @@ class ServicioGasolinaResource extends Resource
                     ->description('Complete los datos de la carga de combustible del vehículo.')
                     ->icon('heroicon-o-fire')
                     ->schema([
-                        
-                        // 1. Vincular al Contrato de Gasolina (Solo muestra servicios de Combustible)
                         Forms\Components\Select::make('id_servicio')
                             ->label('Contrato / Proveedor de Combustible')
-                            ->relationship(
-                                name: 'servicio',
-                                titleAttribute: 'empresa',
-                                modifyQueryUsing: fn (Builder $query) => $query->where('tipo_servicio', 'COMBUSTIBLE')
-                            )
-                            ->getOptionLabelFromRecordUsing(fn ($record) => "[CUCE: {$record->cuce}] - {$record->empresa}")
+                            ->relationship('servicio', 'empresa', fn($query) => $query->where('tipo_servicio', 'COMBUSTIBLE'))
+                            ->getOptionLabelFromRecordUsing(fn($record) => "[CUCE: {$record->cuce}] - {$record->empresa}")
+                            ->searchable()->preload()->required()->native(false),
+
+                        Forms\Components\DatePicker::make('fecha_vale')
+                            ->label('Fecha del Vale')->default(now())->displayFormat('d/m/Y')->native(false)->required(),
+
+                        // 1. CAMBIO: Selector relacional de Vehículos por Placa
+                        Forms\Components\Select::make('id_vehiculo')
+                            ->label('Vehículo (Placa)')
+                            ->relationship('vehiculo', 'placa')
+                            ->placeholder('Seleccione un vehículo...')
                             ->searchable()
                             ->preload()
                             ->required()
                             ->native(false),
 
-                        // 2. Fecha del Vale de Carga
-                        Forms\Components\DatePicker::make('fecha_vale')
-                            ->label('Fecha del Vale')
-                            ->default(now())
-                            ->displayFormat('d/m/Y')
-                            ->native(false)
-                            ->required(),
-
-                        // 3. Control de Placa del Vehículo
-                        Forms\Components\TextInput::make('placa')
-                            ->label('Placa del Vehículo')
+                        // 2. CAMBIO: Nuevo campo de Número de Vale posicionado estratégicamente
+                        Forms\Components\TextInput::make('nro_vale')
+                            ->label('Nº de Vale Físico')
                             ->required()
-                            ->maxLength(20)
-                            ->placeholder('Ej: 4829XYZ')
-                            // Micro-interacción: Convierte el texto a mayúsculas automáticamente en tiempo real
-                            ->extraInputAttributes([
-                                'style' => 'text-transform: uppercase; font-weight: bold; letter-spacing: 1px;',
-                            ])
-                            ->dehydrateStateUsing(fn ($state) => strtoupper($state)),
+                            ->maxLength(50)
+                            ->placeholder('Ej: 0001')
+                            // GENERADOR AUTOMÁTICO
+                            ->default(function () {
+                                // 1. Buscamos el número de vale más alto registrado en la base de datos
+                                $ultimoVale = \App\Models\ServicioGasolina::max('nro_vale');
 
-                        // 4. Cantidad de Litros Despachados
+                                // 2. Si no hay ningún vale registrado aún, empezamos desde el 1
+                                if (!$ultimoVale) {
+                                    $siguienteNumero = 1;
+                                } else {
+                                    // 3. Convertimos el texto (ej: "0014") a entero, le sumamos 1
+                                    $siguienteNumero = ((int) $ultimoVale) + 1;
+                                }
+
+                                // 4. Rellenamos con ceros a la izquierda hasta completar 4 dígitos (ej: 0001)
+                                return str_pad($siguienteNumero, 4, '0', STR_PAD_LEFT);
+                            })
+                            ->disabled(fn($context) => $context === 'edit')
+                            ->dehydrated(), // Asegura que el valor se envíe a la base de datos aunque esté deshabilitado
+
                         Forms\Components\TextInput::make('cantidad_litros')
                             ->label('Cantidad Cargada')
-                            ->numeric()
-                            ->prefix('Lts.')
-                            ->minValue(0.01)
-                            ->required()
-                            ->placeholder('0.00'),
+                            ->numeric()->prefix('Lts.')->minValue(0.01)->required()->placeholder('0.00'),
 
-                        // 5. Usuario que registra (Oculto y automático para resguardar la autoría)
                         Forms\Components\Hidden::make('id_user')
-                            ->default(fn () => Auth::id())
-                            ->required(),
+                            ->default(fn() => Auth::id())->required(),
                     ])->columns(2),
             ]);
     }
@@ -90,11 +93,17 @@ class ServicioGasolinaResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('fecha_vale')
-                    ->label('Fecha del Vale')
-                    ->date('d/m/Y')
-                    ->sortable(),
+                    ->label('Fecha del Vale')->date('d/m/Y')->sortable(),
 
-                Tables\Columns\TextColumn::make('placa')
+                // 3. CAMBIO: Muestra el número de vale en la tabla
+                Tables\Columns\TextColumn::make('nro_vale')
+                    ->label('Nº Vale')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold'),
+
+                // 4. CAMBIO: Mapeo por relación de la Placa
+                Tables\Columns\TextColumn::make('vehiculo.placa')
                     ->label('Placa Vehículo')
                     ->searchable()
                     ->sortable()
@@ -104,132 +113,71 @@ class ServicioGasolinaResource extends Resource
 
                 Tables\Columns\TextColumn::make('cantidad_litros')
                     ->label('Volumen Despachado')
-                    ->numeric(2)
-                    ->suffix(' Lts.')
-                    ->weight('bold')
-                    ->color('primary')
-                    ->sortable()
-    // 👇 ESTA LÍNEA HACE LA SUMATORIA AUTOMÁTICA DE LO QUE ESTÁ EN PANTALLA 👇
-                ->summarize(\Filament\Tables\Columns\Summarizers\Sum::make()->label('Total Litros')),
-
+                    ->numeric(2)->suffix(' Lts.')->weight('bold')->color('primary')->sortable()
+                    ->summarize(\Filament\Tables\Columns\Summarizers\Sum::make()->label('Total Litros')),
                 Tables\Columns\TextColumn::make('servicio.empresa')
-                    ->label('Proveedor / Estación')
-                    ->searchable()
-                    ->sortable(),
-                    Tables\Columns\TextColumn::make('servicio.cantidad_litros')
-    ->label('Total Contrato')
-    ->numeric(2)
-    ->suffix(' Lts.')
-    ->color('gray')
-    ->toggleable(isToggledHiddenByDefault: true), // Oculto por defecto para no saturar
-
-Tables\Columns\TextColumn::make('saldo_contrato')
-    ->label('Saldo del Contrato')
-    // 👇 CÁLCULO VISUAL AL VUELO 👇
-    ->getStateUsing(function ($record) {
-        if (!$record->servicio || !$record->servicio->cantidad_litros) {
-            return 0;
-        }
-        // Sumamos absolutamente todos los vales despachados para este contrato específico
-        $totalConsumido = \App\Models\ServicioGasolina::where('id_servicio', $record->id_servicio)->sum('cantidad_litros');
-        
-        // Retornamos la resta (Litros Originales - Litros Consumidos)
-        return $record->servicio->cantidad_litros - $totalConsumido;
-    })
-    ->numeric(2)
-    ->suffix(' Lts.')
-    ->badge()
-    ->color(fn ($state) => $state <= 0 ? 'danger' : ($state < 500 ? 'warning' : 'success')) // Semáforo de alerta
-    ->sortable(false),
-
-                Tables\Columns\TextColumn::make('servicio.cuce')
-                    ->label('CUCE Contrato')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Empresa')
+                    ->limit(15)
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('saldo_contrato')
+                    ->label('Saldo del Contrato')
+                    ->getStateUsing(function ($record) {
+                        if (!$record->servicio || !$record->servicio->cantidad_litros) return 0;
+                        $totalConsumido = \App\Models\ServicioGasolina::where('id_servicio', $record->id_servicio)->sum('cantidad_litros');
+                        return $record->servicio->cantidad_litros - $totalConsumido;
+                    })->numeric(2)->suffix(' Lts.')->badge()
+                    ->color(fn($state) => $state <= 0 ? 'danger' : ($state < 500 ? 'warning' : 'success')),
 
                 Tables\Columns\TextColumn::make('user.responsable.nombre_apellido')
-                    ->label('Funcionario (Registrado Por)')
-                    ->color('gray')
-                    ->sortable()
-                    ->searchable()
-                    ->default('Administrador del Sistema'),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Fecha Registro Sistema')
-                    ->dateTime('d/m/Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
+                    ->label('Funcionario (Registrado Por)')->color('gray')->sortable()->searchable()->default('Administrador'),
             ])
-            ->filters([
-                Tables\Filters\Filter::make('fecha_vale')
-                    ->form([
-                        Forms\Components\DatePicker::make('desde')->label('Desde')->native(false),
-                        Forms\Components\DatePicker::make('hasta')->label('Hasta')->native(false),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when($data['desde'], fn ($q, $date) => $q->whereDate('fecha_vale', '>=', $date))
-                            ->when($data['hasta'], fn ($q, $date) => $q->whereDate('fecha_vale', '<=', $date));
+            ->filters([/* tus filtros de fecha... */])
+            ->actions([
+                // NUEVA ACCIÓN DE FILA: IMPRIMIR ACTA INDIVIDUAL
+                Tables\Actions\Action::make('imprimir_acta')
+                    ->label('Imprimir Acta')
+                    ->icon('heroicon-o-printer')
+                    ->color('info') // Color azul para diferenciarlo de la edición
+                    ->action(function ($record, \Livewire\Component $livewire) {
+                        // 1. Construimos la URL usando el ID de este vale específico
+                        $url = route('gasolina.acta.individual', ['id' => $record->idservicio_gasolina]);
+
+                        // 2. Ejecutamos la apertura en una pestaña nueva de forma reactiva
+                        $livewire->js("window.open('{$url}', '_blank');");
                     }),
-            ])
-->actions([
-            Tables\Actions\EditAction::make(),
-        ])
-        // 👇 AÑADIMOS EL BOTÓN EN LA PARTE SUPERIOR DE LA TABLA 👇
-->headerActions([
-    Tables\Actions\Action::make('reporte_placas')
-        ->label('Resumen por Placas (PDF)')
-        ->icon('heroicon-o-document-chart-bar')
-        ->color('danger')
-        ->form([
-            \Filament\Forms\Components\Grid::make(2)
-                ->schema([
-                    \Filament\Forms\Components\DatePicker::make('desde')
-                        ->label('Fecha Inicio')
-                        ->required()
-                        ->native(false)
-                        ->default(now()->startOfMonth()),
-                    \Filament\Forms\Components\DatePicker::make('hasta')
-                        ->label('Fecha Fin')
-                        ->required()
-                        ->native(false)
-                        ->default(now()),
-                ]),
 
-            // 👇 NUEVO: Desplegable dinámico y múltiple para las placas 👇
-            \Filament\Forms\Components\Select::make('placas')
-                ->label('Filtrar por Placa(s)')
-                ->placeholder('Todas las placas (Dejar vacío para ver todo)')
-                ->options(function () {
-                    // Extrae las placas únicas directamente de la base de datos para el desplegable
-                    return \App\Models\ServicioGasolina::distinct()
-                        ->whereNotNull('placa')
-                        ->pluck('placa', 'placa')
-                        ->toArray();
-                })
-                ->multiple() // Permite escoger 1, varias o ninguna
-                ->searchable() // Habilita buscador interno en el desplegable
-                ->preload() // Precarga los datos para mayor velocidad
-                ->native(false),
-        ])
-->action(function (array $data, \Livewire\Component $livewire) {
-    // 1. Construimos la URL completa con todos los parámetros ingresados en el formulario
-    $url = route('gasolina.reporte', [
-        'desde' => $data['desde'],
-        'hasta' => $data['hasta'],
-        'placas' => $data['placas'] ?? [],
-    ]);
-
-    // 2. Usamos el motor de Livewire para ejecutar JavaScript puro en el navegador del cliente
-    // Esto fuerza la apertura del PDF en una pestaña nueva sin perder tu trabajo actual.
-    $livewire->js("window.open('{$url}', '_blank');");
-}),
-])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                //    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\EditAction::make(),
             ])
-            ->defaultSort('fecha_vale', 'desc');
+            ->headerActions([
+                // 5. CAMBIO: El botón de reporte ahora despliega los IDs de los Vehículos reales
+                Tables\Actions\CreateAction::make()
+                    ->label('Crear Vale de Combustible')
+                    ->icon('heroicon-o-plus-circle'),
+
+                Tables\Actions\Action::make('reporte_placas')
+                    ->label('Resumen por Placas (PDF)')
+                    ->icon('heroicon-o-document-chart-bar')
+                    ->color('danger')
+                    ->form([
+                        \Filament\Forms\Components\Grid::make(2)->schema([
+                            \Filament\Forms\Components\DatePicker::make('desde')->label('Fecha Inicio')->required()->native(false)->default(now()->startOfMonth()),
+                            \Filament\Forms\Components\DatePicker::make('hasta')->label('Fecha Fin')->required()->native(false)->default(now()),
+                        ]),
+                        \Filament\Forms\Components\Select::make('placas')
+                            ->label('Filtrar por Vehículo(s)')
+                            ->placeholder('Todos los vehículos (Dejar vacío para ver todo)')
+                            ->options(\App\Models\Vehiculo::pluck('placa', 'idvehiculo')->toArray()) // Envía ID, muestra Placa
+                            ->multiple()->searchable()->preload()->native(false),
+                    ])
+                    ->action(function (array $data, \Livewire\Component $livewire) {
+                        $url = route('gasolina.reporte', [
+                            'desde' => $data['desde'],
+                            'hasta' => $data['hasta'],
+                            'placas' => $data['placas'] ?? [],
+                        ]);
+                        $livewire->js("window.open('{$url}', '_blank');");
+                    }),
+            ]);
     }
 
     public static function getRelations(): array

@@ -3,6 +3,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\ServicioGasolina;
 use App\Models\Servicio;
+use App\Models\Vehiculo;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Acta;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -112,40 +113,37 @@ Route::get('/servicios/imprimir', function () {
 })->name('solicitud.imprimir')->middleware('auth');
 Route::get('/reporte-gasolina', function (Request $request) {
     
-    // 1. CAPTURA DE PARÁMETROS DE FILTRADO
     $desde = $request->query('desde', now()->startOfMonth()->toDateString());
     $hasta = $request->query('hasta', now()->toDateString());
-    $placasSeleccionadas = $request->query('placas', []);
+    $vehiculosSeleccionados = $request->query('placas', []); // Recibe un array de IDs de vehículos
 
-    // 2. CONSULTA DE VALES CONSUMIDOS POR VEHÍCULO
+    // 1. CONSULTA DE VALES AGRUPADOS POR VEHÍCULO CON UN JOIN SEGURO
     $query = ServicioGasolina::select(
-            'id_servicio',
-            'placa',
-            DB::raw('COUNT(idservicio_gasolina) as total_cargas'),
-            DB::raw('SUM(cantidad_litros) as total_litros')
+            'servicio_gasolina.id_servicio',
+            'servicio_gasolina.id_vehiculo',
+            'vehiculos.placa as placa', // Mapeamos el nombre de la placa para no romper la vista Blade
+            DB::raw('COUNT(servicio_gasolina.idservicio_gasolina) as total_cargas'),
+            DB::raw('SUM(servicio_gasolina.cantidad_litros) as total_litros')
         )
-        ->whereBetween('fecha_vale', [$desde, $hasta]);
+        ->join('vehiculos', 'servicio_gasolina.id_vehiculo', '=', 'vehiculos.idvehiculo')
+        ->whereBetween('servicio_gasolina.fecha_vale', [$desde, $hasta]);
 
-    // Aplicar filtro condicional si el usuario seleccionó placas específicas en Filament
-    if (!empty($placasSeleccionadas)) {
-        $query->whereIn('placa', $placasSeleccionadas);
+    // Filtrado condicional por IDs de vehículos
+    if (!empty($vehiculosSeleccionados)) {
+        $query->whereIn('servicio_gasolina.id_vehiculo', $vehiculosSeleccionados);
     }
 
-    $resumenPlacas = $query->groupBy('id_servicio', 'placa')
+    $resumenPlacas = $query->groupBy('servicio_gasolina.id_servicio', 'servicio_gasolina.id_vehiculo', 'vehiculos.placa')
         ->orderBy('total_litros', 'desc')
         ->get();
 
-    // Sumatoria del volumen total despachado en el periodo para el pie de página
     $granTotalLitros = $resumenPlacas->sum('total_litros');
 
-    // 3. CÁLCULO DE SALDOS DE CONTRATOS USANDO LA LLAVE 'idservicios'
+    // 2. CÁLCULO DE SALDOS DE CONTRATOS (idservicios)
     $idsServiciosUsados = $resumenPlacas->pluck('id_servicio')->unique();
     
     $resumenContratos = Servicio::whereIn('idservicios', $idsServiciosUsados)->get()->map(function($servicio) {
-        
-        // Sumamos todo el consumo histórico de este contrato para calcular el saldo real al vuelo
         $consumoHistorico = ServicioGasolina::where('id_servicio', $servicio->idservicios)->sum('cantidad_litros');
-        
         return (object) [
             'empresa' => $servicio->empresa,
             'cuce' => $servicio->cuce,
@@ -154,17 +152,37 @@ Route::get('/reporte-gasolina', function (Request $request) {
         ];
     });
 
-    // 4. GENERACIÓN Y RENDERIZADO DEL PDF
+    // 3. GENERACIÓN DEL TEXTO DEL FILTRO DE VEHÍCULOS
+    $textoFiltroVehiculos = empty($vehiculosSeleccionados) 
+        ? 'TODOS LAS PLACAS / PARQUE AUTOMOTOR' 
+        : implode(', ', Vehiculo::whereIn('idvehiculo', $vehiculosSeleccionados)->pluck('placa')->toArray());
+
+    // 4. GENERACIÓN DEL PDF
     $pdf = Pdf::loadView('pdf.gasolina_resumen', [
         'resumen' => $resumenPlacas,
         'contratos' => $resumenContratos,
         'desde' => Carbon::parse($desde)->format('d/m/Y'),
         'hasta' => Carbon::parse($hasta)->format('d/m/Y'),
         'granTotal' => $granTotalLitros,
-        'placasFiltro' => empty($placasSeleccionadas) ? 'TODAS LAS PLACAS' : implode(', ', $placasSeleccionadas),
+        'placasFiltro' => $textoFiltroVehiculos,
     ]);
 
-    // Envía el stream para que el navegador lo abra directamente en la pestaña nueva
     return $pdf->stream("Reporte_Combustible_Filtrado.pdf");
 
 })->name('gasolina.reporte')->middleware('auth');
+Route::get('/acta-gasolina/{id}', function ($id) {
+    
+    // Buscamos el vale específico con todas sus relaciones cargadas
+    $vale = \App\Models\ServicioGasolina::with(['vehiculo', 'servicio', 'user.responsable'])
+        ->findOrFail($id);
+
+    // Renderizamos la vista HTML orientada a un Acta de Entrega Física
+    $pdf = Pdf::loadView('pdf.gasolina_acta_individual', [
+        'vale' => $vale,
+        'fecha_impresion' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
+    ]);
+
+    // Retornamos el flujo para que se abra limpio en la nueva pestaña
+    return $pdf->stream("Acta_Vale_Combustible_{$vale->nro_vale}.pdf");
+
+})->name('gasolina.acta.individual')->middleware('auth');
