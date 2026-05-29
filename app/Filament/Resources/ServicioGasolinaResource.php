@@ -108,12 +108,39 @@ class ServicioGasolinaResource extends Resource
                     ->suffix(' Lts.')
                     ->weight('bold')
                     ->color('primary')
-                    ->sortable(),
+                    ->sortable()
+    // 👇 ESTA LÍNEA HACE LA SUMATORIA AUTOMÁTICA DE LO QUE ESTÁ EN PANTALLA 👇
+                ->summarize(\Filament\Tables\Columns\Summarizers\Sum::make()->label('Total Litros')),
 
                 Tables\Columns\TextColumn::make('servicio.empresa')
                     ->label('Proveedor / Estación')
                     ->searchable()
                     ->sortable(),
+                    Tables\Columns\TextColumn::make('servicio.cantidad_litros')
+    ->label('Total Contrato')
+    ->numeric(2)
+    ->suffix(' Lts.')
+    ->color('gray')
+    ->toggleable(isToggledHiddenByDefault: true), // Oculto por defecto para no saturar
+
+Tables\Columns\TextColumn::make('saldo_contrato')
+    ->label('Saldo del Contrato')
+    // 👇 CÁLCULO VISUAL AL VUELO 👇
+    ->getStateUsing(function ($record) {
+        if (!$record->servicio || !$record->servicio->cantidad_litros) {
+            return 0;
+        }
+        // Sumamos absolutamente todos los vales despachados para este contrato específico
+        $totalConsumido = \App\Models\ServicioGasolina::where('id_servicio', $record->id_servicio)->sum('cantidad_litros');
+        
+        // Retornamos la resta (Litros Originales - Litros Consumidos)
+        return $record->servicio->cantidad_litros - $totalConsumido;
+    })
+    ->numeric(2)
+    ->suffix(' Lts.')
+    ->badge()
+    ->color(fn ($state) => $state <= 0 ? 'danger' : ($state < 500 ? 'warning' : 'success')) // Semáforo de alerta
+    ->sortable(false),
 
                 Tables\Columns\TextColumn::make('servicio.cuce')
                     ->label('CUCE Contrato')
@@ -144,9 +171,59 @@ class ServicioGasolinaResource extends Resource
                             ->when($data['hasta'], fn ($q, $date) => $q->whereDate('fecha_vale', '<=', $date));
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
+->actions([
+            Tables\Actions\EditAction::make(),
+        ])
+        // 👇 AÑADIMOS EL BOTÓN EN LA PARTE SUPERIOR DE LA TABLA 👇
+->headerActions([
+    Tables\Actions\Action::make('reporte_placas')
+        ->label('Resumen por Placas (PDF)')
+        ->icon('heroicon-o-document-chart-bar')
+        ->color('danger')
+        ->form([
+            \Filament\Forms\Components\Grid::make(2)
+                ->schema([
+                    \Filament\Forms\Components\DatePicker::make('desde')
+                        ->label('Fecha Inicio')
+                        ->required()
+                        ->native(false)
+                        ->default(now()->startOfMonth()),
+                    \Filament\Forms\Components\DatePicker::make('hasta')
+                        ->label('Fecha Fin')
+                        ->required()
+                        ->native(false)
+                        ->default(now()),
+                ]),
+
+            // 👇 NUEVO: Desplegable dinámico y múltiple para las placas 👇
+            \Filament\Forms\Components\Select::make('placas')
+                ->label('Filtrar por Placa(s)')
+                ->placeholder('Todas las placas (Dejar vacío para ver todo)')
+                ->options(function () {
+                    // Extrae las placas únicas directamente de la base de datos para el desplegable
+                    return \App\Models\ServicioGasolina::distinct()
+                        ->whereNotNull('placa')
+                        ->pluck('placa', 'placa')
+                        ->toArray();
+                })
+                ->multiple() // Permite escoger 1, varias o ninguna
+                ->searchable() // Habilita buscador interno en el desplegable
+                ->preload() // Precarga los datos para mayor velocidad
+                ->native(false),
+        ])
+->action(function (array $data, \Livewire\Component $livewire) {
+    // 1. Construimos la URL completa con todos los parámetros ingresados en el formulario
+    $url = route('gasolina.reporte', [
+        'desde' => $data['desde'],
+        'hasta' => $data['hasta'],
+        'placas' => $data['placas'] ?? [],
+    ]);
+
+    // 2. Usamos el motor de Livewire para ejecutar JavaScript puro en el navegador del cliente
+    // Esto fuerza la apertura del PDF en una pestaña nueva sin perder tu trabajo actual.
+    $livewire->js("window.open('{$url}', '_blank');");
+}),
+])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                 //    Tables\Actions\DeleteBulkAction::make(),

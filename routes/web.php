@@ -1,10 +1,13 @@
 <?php
-
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Models\ServicioGasolina;
+use App\Models\Servicio;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Acta;
 use Barryvdh\DomPDF\Facade\Pdf;
-
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -107,3 +110,61 @@ Route::get('/servicios/imprimir', function () {
     return $pdf->stream("Comprobante_{$numeroSolicitud}.pdf");
 
 })->name('solicitud.imprimir')->middleware('auth');
+Route::get('/reporte-gasolina', function (Request $request) {
+    
+    // 1. CAPTURA DE PARÁMETROS DE FILTRADO
+    $desde = $request->query('desde', now()->startOfMonth()->toDateString());
+    $hasta = $request->query('hasta', now()->toDateString());
+    $placasSeleccionadas = $request->query('placas', []);
+
+    // 2. CONSULTA DE VALES CONSUMIDOS POR VEHÍCULO
+    $query = ServicioGasolina::select(
+            'id_servicio',
+            'placa',
+            DB::raw('COUNT(idservicio_gasolina) as total_cargas'),
+            DB::raw('SUM(cantidad_litros) as total_litros')
+        )
+        ->whereBetween('fecha_vale', [$desde, $hasta]);
+
+    // Aplicar filtro condicional si el usuario seleccionó placas específicas en Filament
+    if (!empty($placasSeleccionadas)) {
+        $query->whereIn('placa', $placasSeleccionadas);
+    }
+
+    $resumenPlacas = $query->groupBy('id_servicio', 'placa')
+        ->orderBy('total_litros', 'desc')
+        ->get();
+
+    // Sumatoria del volumen total despachado en el periodo para el pie de página
+    $granTotalLitros = $resumenPlacas->sum('total_litros');
+
+    // 3. CÁLCULO DE SALDOS DE CONTRATOS USANDO LA LLAVE 'idservicios'
+    $idsServiciosUsados = $resumenPlacas->pluck('id_servicio')->unique();
+    
+    $resumenContratos = Servicio::whereIn('idservicios', $idsServiciosUsados)->get()->map(function($servicio) {
+        
+        // Sumamos todo el consumo histórico de este contrato para calcular el saldo real al vuelo
+        $consumoHistorico = ServicioGasolina::where('id_servicio', $servicio->idservicios)->sum('cantidad_litros');
+        
+        return (object) [
+            'empresa' => $servicio->empresa,
+            'cuce' => $servicio->cuce,
+            'total_contrato' => $servicio->cantidad_litros,
+            'saldo_actual' => $servicio->cantidad_litros - $consumoHistorico
+        ];
+    });
+
+    // 4. GENERACIÓN Y RENDERIZADO DEL PDF
+    $pdf = Pdf::loadView('pdf.gasolina_resumen', [
+        'resumen' => $resumenPlacas,
+        'contratos' => $resumenContratos,
+        'desde' => Carbon::parse($desde)->format('d/m/Y'),
+        'hasta' => Carbon::parse($hasta)->format('d/m/Y'),
+        'granTotal' => $granTotalLitros,
+        'placasFiltro' => empty($placasSeleccionadas) ? 'TODAS LAS PLACAS' : implode(', ', $placasSeleccionadas),
+    ]);
+
+    // Envía el stream para que el navegador lo abra directamente en la pestaña nueva
+    return $pdf->stream("Reporte_Combustible_Filtrado.pdf");
+
+})->name('gasolina.reporte')->middleware('auth');
