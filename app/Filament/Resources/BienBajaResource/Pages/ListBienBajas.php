@@ -13,7 +13,10 @@ class ListBienBajas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // 👇 Personalizamos el botón superior que lleva al formulario
+            Actions\CreateAction::make()
+                ->label('Dar baja Activo')
+                ->icon('heroicon-o-minus-circle'), // Un ícono representativo de "dar de baja"
         ];
     }
 }

@@ -83,15 +83,16 @@ public static function form(Form $form): Form
                 Tables\Columns\TextColumn::make('bien.descripcion')
                     ->label('Descripción del Bien')
                     ->searchable()
-                    ->limit(40),
+                    ->limit(25),
                 Tables\Columns\TextColumn::make('bien.costo')
                     ->label('Costo')
                     ->searchable()
-                    ->limit(40),
+                    ->limit(25),
 
                 Tables\Columns\TextColumn::make('motivo_baja')
                     ->label('Motivo Baja')
                     ->searchable()
+                    ->limit(25)
                     ->color('danger'), // Color rojo para resaltar que es una baja
 
                 Tables\Columns\TextColumn::make('fecha_aprobacion')
@@ -99,7 +100,25 @@ public static function form(Form $form): Form
                     ->date('d/m/Y')
                     ->sortable(),
             ])
-            ->defaultSort('fecha_aprobacion', 'desc'); // Ordenar por los más recientes
+            ->defaultSort('fecha_aprobacion', 'desc') // Ordenar por los más recientes
+            ->actions([
+                // Botón de Reimpresión de Acta Individual
+                Tables\Actions\Action::make('reimprimir_baja')
+                    ->label('Imprimir Acta')
+                    ->icon('heroicon-o-printer')
+                    ->color('info')
+                    ->action(function ($record, \Livewire\Component $livewire) {
+                        $url = route('bien.baja.acta', ['id' => $record->getKey()]);
+                        $livewire->js("window.open('{$url}', '_blank');");
+                    }),
+                
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getRelations(): array

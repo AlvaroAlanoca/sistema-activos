@@ -186,3 +186,17 @@ Route::get('/acta-gasolina/{id}', function ($id) {
     return $pdf->stream("Acta_Vale_Combustible_{$vale->nro_vale}.pdf");
 
 })->name('gasolina.acta.individual')->middleware('auth');
+Route::get('/acta-baja-bien/{id}', function ($id) {
+    
+    $baja = \App\Models\BienBaja::with(['bien.tipoBien'])->findOrFail($id);
+
+    // Cargamos el diseño institucional vertical para desincorporaciones
+    $pdf = Pdf::loadView('pdf.bien_baja_acta', [
+        'baja' => $baja,
+        'fecha_impresion' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
+    ]);
+
+    // Retornamos el flujo limpio
+    return $pdf->stream("Acta_Baja_Activo_{$baja->bien?->codigo}.pdf");
+
+})->name('bien.baja.acta')->middleware('auth');
