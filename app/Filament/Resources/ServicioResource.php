@@ -132,15 +132,29 @@ public static function form(Form $form): Form
                 ])->columns(3),
 
             // SECCIÓN 2: DOCUMENTOS DIGITALES (Se mantiene intacta)
-            Forms\Components\Section::make('Documentación Digital de Respaldo')
-                ->description('Cargue los archivos correspondientes en formato PDF o Imagen. El sistema extraerá el flujo binario para guardarlo en la base de datos.')
-                ->schema([
-                    self::configurarCampoBlob('convocatoria', 'Convocatoria Oficial'),
-                    self::configurarCampoBlob('documento_base', 'Documento Base de Contratación (DBC)'),
-                    self::configurarCampoBlob('acta_apertura', 'Acta de Apertura'),
-                    self::configurarCampoBlob('resolucion_adjudicacion', 'Resolución de Adjudicación'),
-                    self::configurarCampoBlob('informe', 'Informe Técnico / Final'),
-                ])->columns(2),
+\Filament\Forms\Components\Section::make('Respaldos Digitales')
+    ->schema([
+        
+        // 1. CONVOCATORIA (Se oculta si es DDELPZ)
+        self::configurarCampoBlob('convocatoria', 'Convocatoria')
+            ->hidden(fn (\Filament\Forms\Get $get) => $get('tipo') === 'DDELPZ'),
+
+        // 2. DOCUMENTO BASE / DBC (¡La excepción! Siempre visible sin importar el origen)
+        self::configurarCampoBlob('documento_base', 'Documento Base de Contratación (DBC) o Contrato'),
+
+        // 3. ACTA DE APERTURA (Se oculta si es DDELPZ)
+        self::configurarCampoBlob('acta_apertura', 'Acta de Apertura')
+            ->hidden(fn (\Filament\Forms\Get $get) => $get('tipo') === 'DDELPZ'),
+
+        // 4. RESOLUCIÓN DE ADJUDICACIÓN (Se oculta si es DDELPZ)
+        self::configurarCampoBlob('resolucion_adjudicacion', 'Resolución de Adjudicación')
+            ->hidden(fn (\Filament\Forms\Get $get) => $get('tipo') === 'DDELPZ'),
+
+        // 5. INFORME (Se oculta si es DDELPZ)
+        self::configurarCampoBlob('informe', 'Informe')
+            ->hidden(fn (\Filament\Forms\Get $get) => $get('tipo') === 'DDELPZ'),
+
+    ])->columns(2),
         ]);
 }
 
@@ -241,16 +255,16 @@ protected static function configurarCampoBlob(string $campo, string $etiqueta): 
             ->label($etiqueta)
             ->acceptedFileTypes(['application/pdf', 'image/*'])
             ->maxSize(20480)
-            ->live()
-            // 👇 1. EVITA EL COLAPSO: Le dice a Filament que no intente renderizar el binario en pantalla
+
+            // EVITA EL COLAPSO: Le dice a Filament que no intente renderizar el binario en pantalla
             ->formatStateUsing(fn () => null) 
-            // 👇 2. PROTECCIÓN DE DATOS: Solo envía la orden de guardar si el usuario subió un archivo NUEVO. 
+            // PROTECCIÓN DE DATOS: Solo envía la orden de guardar si el usuario subió un archivo NUEVO. 
             // Si lo deja en blanco, ignora el campo y el archivo original se mantiene intacto.
             ->dehydrated(fn ($state) => filled($state)) 
             ->saveUploadedFileUsing(function ($file) {
                 return file_get_contents($file->getRealPath());
             })
-            // 👇 3. EXPERIENCIA DE USUARIO: Como el cuadro se verá vacío, le avisamos que el archivo ya existe.
+            // EXPERIENCIA DE USUARIO: Como el cuadro se verá vacío, le avisamos que el archivo ya existe.
             ->helperText(function (?Servicio $record) use ($campo) {
                 // Si estamos editando y el campo tiene datos, mostramos el aviso verde
                 if ($record && $record->$campo) {
