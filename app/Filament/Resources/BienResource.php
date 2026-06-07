@@ -6,8 +6,8 @@ use App\Filament\Resources\BienResource\Pages;
 use App\Models\Bien;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Get; 
-use Filament\Forms\Set; 
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Auth;
 class BienResource extends Resource
 {
     protected static ?string $model = Bien::class;
-    
+
     protected static ?string $navigationGroup = 'Gestión de Inventario';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
@@ -40,55 +40,53 @@ class BienResource extends Resource
                 ->description('Asigne el tipo de bien y correlativo. El código patrimonial se generará automáticamente.')
                 ->icon('heroicon-o-qr-code')
                 ->schema([
-                    Forms\Components\Select::make('id_tipo_bien')
+                    \Filament\Forms\Components\Select::make('id_tipo_bien')
                         ->label('Tipo de Bien')
                         ->relationship('tipoBien', 'descripcion')
-                        ->searchable() 
-                        ->preload()    
+                        ->searchable()
+                        ->preload()
                         ->required()
-                        ->live() 
-                        ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                        ->live()
+                        ->afterStateUpdated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, $state) {
+                            // Busqueda del rubro
                             $tipoBien = \App\Models\TipoBien::with('rubro')->find($state);
-                            $codigoRubro = $tipoBien ? $tipoBien->rubro->codigo_rubro : '';
+                            $codigoRubro = $tipoBien && $tipoBien->rubro ? $tipoBien->rubro->codigo_rubro : '';
+
+                            // Obtenemos el correlativo que ya se llenó solo en el paso 1
                             $correlativo = $get('correlativo') ?? '';
-                            
+
+                            // Disparamos el resultado al campo de abajo
                             $set('codigo', '266' . $codigoRubro . $correlativo);
                         }),
-
                     Forms\Components\TextInput::make('correlativo')
                         ->label('Correlativo')
-                        ->numeric()
                         ->required()
-                        ->live(debounce: 500) 
-                        ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                            $idTipoBien = $get('id_tipo_bien');
-                            $codigoRubro = '';
-                            
-                            if ($idTipoBien) {
-                                $tipoBien = \App\Models\TipoBien::with('rubro')->find($idTipoBien);
-                                $codigoRubro = $tipoBien ? $tipoBien->rubro->codigo_rubro : '';
-                            }
-                            
-                            $correlativo = $state ?? '';
-                            $set('codigo', '266' . $codigoRubro . $correlativo);
-                        }),
+                        //Genera el número con ceros a la izquierda al abrir el formulario
+                        ->default(function () {
+                            $ultimoBien = \App\Models\Bien::latest('idbienes')->first();
+                            $siguienteNumero = $ultimoBien ? ((int) $ultimoBien->correlativo) + 1 : 1;
+                            return str_pad($siguienteNumero, 5, '0', STR_PAD_LEFT);
+                        })
+                        ->readOnly() // El usuario no lo puede modificar manualmente
+                        ->disabled(fn(?string $operation) => $operation === 'edit') // Bloqueado en edición
+                        ->dehydrated(), // Garantiza que se envíe a MySQL al guardar
 
                     Forms\Components\TextInput::make('codigo')
                         ->label('Código de Activo Fijo')
                         ->required()
                         ->unique(ignoreRecord: true)
-                        ->readOnly() 
-                        ->dehydrated() 
+                        ->readOnly()
+                        ->dehydrated()
                         ->extraInputAttributes(['style' => 'font-weight: bold; color: #0284c7; background-color: #f0f9ff;']),
 
-                    Forms\Components\TextInput::make('costo')
+                    Forms\Components\TextInput::make('costo') // o 'monto', según el nombre en tu BD
                         ->label('Costo de Adquisición')
                         ->numeric()
-                        ->inputMode('decimal')
-                        ->prefix('Bs.') 
-                        ->maxValue(99999999.99)
-                        ->nullable(),    
-                        
+                        ->prefix('Bs.')
+                        ->minValue(0)
+                        ->placeholder('0.00')
+                        ->required(),
+
                     Forms\Components\DatePicker::make('fecha_compra')
                         ->label('Fecha de la compra')
                         ->displayFormat('d/m/Y')
@@ -115,7 +113,7 @@ class BienResource extends Resource
                             'MANTENIMIENTO' => '🟠 En Mantenimiento',
                         ])
                         ->default('DISPONIBLE')
-                        ->native(false) 
+                        ->native(false)
                         ->required()
                         ->columnSpan(1),
                 ])->columns(2),
@@ -150,7 +148,7 @@ class BienResource extends Resource
                     ->label('Rubro Presupuestario')
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 Tables\Columns\TextColumn::make('fecha_compra')
                     ->label('Fecha Adquisición')
                     ->color('gray')
@@ -160,18 +158,18 @@ class BienResource extends Resource
 
                 Tables\Columns\TextColumn::make('estado')
                     ->label('Estado')
-                    ->searchable() 
+                    ->searchable()
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'DISPONIBLE' => 'success',
                         'ENTREGADO' => 'danger',
                         'MANTENIMIENTO' => 'warning',
                         default => 'gray',
                     }),
-                    
+
                 Tables\Columns\TextColumn::make('costo')
                     ->label('Costo')
-                    ->money('BOB') 
+                    ->money('BOB')
                     ->sortable()
                     ->searchable(),
             ])
@@ -183,7 +181,7 @@ class BienResource extends Resource
                         'ENTREGADO' => 'Entregados',
                         'MANTENIMIENTO' => 'En Mantenimiento',
                     ]),
-                
+
                 Tables\Filters\SelectFilter::make('id_tipo_bien')
                     ->label('Filtrar por Categoría')
                     ->relationship('tipoBien', 'descripcion')
@@ -197,7 +195,7 @@ class BienResource extends Resource
                         $user = Auth::user();
                         return $user && $user->hasRole('responsable');
                     }),
-                    
+
                 // ACCIÓN NUEVA: Solicitar Asignación (Solo Responsables)
                 Tables\Actions\Action::make('solicitar')
                     ->label('Solicitar Asignación')
@@ -215,7 +213,7 @@ class BienResource extends Resource
                             ->placeholder('Explique para qué área o función requiere este activo fijo...'),
                     ])
                     ->action(function (Bien $record, array $data) {
-                        
+
                         // 1. Crear y atrapar la solicitud
                         $solicitud = \App\Models\Solicitud::create([
                             'bien_id' => $record->getKey(),
@@ -225,7 +223,7 @@ class BienResource extends Resource
                         ]);
 
                         // 2. Cambiar estado temporal
-                        $record->update(['estado' => 'MANTENIMIENTO']); 
+                        $record->update(['estado' => 'MANTENIMIENTO']);
 
                         // 3. Notificar con botón de PDF
                         \Filament\Notifications\Notification::make()
@@ -262,16 +260,16 @@ class BienResource extends Resource
                                     ->schema([
                                         \Filament\Forms\Components\Placeholder::make('sol_nombre')
                                             ->label('Apellidos y Nombres:')
-                                            ->content(fn () => Auth::user()?->responsable?->nombre_apellido ?? 'N/D')
+                                            ->content(fn() => Auth::user()?->responsable?->nombre_apellido ?? 'N/D')
                                             ->extraAttributes(['class' => 'font-semibold text-primary-600']),
-                                        
+
                                         \Filament\Forms\Components\Placeholder::make('sol_ci')
                                             ->label('Nro. Documento:')
-                                            ->content(fn () => Auth::user()?->responsable?->ci ?? 'N/D'),
-                                            
+                                            ->content(fn() => Auth::user()?->responsable?->ci ?? 'N/D'),
+
                                         \Filament\Forms\Components\Placeholder::make('sol_cargo')
                                             ->label('Cargo:')
-                                            ->content(fn () => Auth::user()?->responsable?->oficinaCargo?->cargo?->descripcion ?? 'N/D'),
+                                            ->content(fn() => Auth::user()?->responsable?->oficinaCargo?->cargo?->descripcion ?? 'N/D'),
                                     ]),
                             ]),
 
@@ -280,9 +278,9 @@ class BienResource extends Resource
                                 \Filament\Forms\Components\Select::make('id_receptor')
                                     ->label('Buscar Funcionario (Apellidos y Nombres)')
                                     ->options(function () {
-                                        $adminIds = \App\Models\User::whereHas('roles', function($q) {
-                                                $q->whereIn('name', ['admin', 'super_admin']);
-                                            })
+                                        $adminIds = \App\Models\User::whereHas('roles', function ($q) {
+                                            $q->whereIn('name', ['admin', 'super_admin']);
+                                        })
                                             ->whereNotNull('responsable_id')
                                             ->pluck('responsable_id')
                                             ->toArray();
@@ -293,7 +291,7 @@ class BienResource extends Resource
                                         }
 
                                         $query = \App\Models\Responsable::query();
-                                        
+
                                         if (!empty($adminIds)) {
                                             $query->whereNotIn('idresponsables', $adminIds);
                                         }
@@ -313,7 +311,7 @@ class BienResource extends Resource
                                                 if (!$get('id_receptor')) return '--';
                                                 return \App\Models\Responsable::find($get('id_receptor'))?->ci ?? 'N/D';
                                             }),
-                                            
+
                                         \Filament\Forms\Components\Placeholder::make('rec_oficina')
                                             ->label('Oficina:')
                                             ->content(function (\Filament\Forms\Get $get) {
@@ -321,7 +319,7 @@ class BienResource extends Resource
                                                 $receptor = \App\Models\Responsable::with('oficinaCargo.oficina')->find($get('id_receptor'));
                                                 return $receptor?->oficinaCargo?->oficina?->descripcion ?? 'N/D';
                                             }),
-                                            
+
                                         \Filament\Forms\Components\Placeholder::make('rec_cargo')
                                             ->label('Cargo:')
                                             ->content(function (\Filament\Forms\Get $get) {
@@ -331,7 +329,7 @@ class BienResource extends Resource
                                             }),
                                     ]),
                             ]),
-                            
+
                         \Filament\Forms\Components\Textarea::make('observaciones')
                             ->label('Observaciones de la Transferencia')
                             ->rows(2),
@@ -348,9 +346,9 @@ class BienResource extends Resource
 
                         foreach ($records as $bien) {
                             \App\Models\ActaItem::create([
-                                'id_acta' => $nuevaActa->getKey(), 
+                                'id_acta' => $nuevaActa->getKey(),
                                 'id_bienes' => $bien->getKey(),
-                                'estado' => 'Bueno', 
+                                'estado' => 'Bueno',
                             ]);
                         }
 
@@ -373,12 +371,12 @@ class BienResource extends Resource
             ->checkIfRecordIsSelectableUsing(function (Bien $record) {
                 /** @var \App\Models\User|null $user */
                 $user = Auth::user();
-                
+
                 if ($user && $user->hasRole('responsable') && !$user->hasRole('admin') && !$user->hasRole('super_admin')) {
                     // No pueden seleccionar bienes de la pestaña de catálogo (DISPONIBLES) para transferirlos
-                    return $record->estado !== 'DISPONIBLE'; 
+                    return $record->estado !== 'DISPONIBLE';
                 }
-                
+
                 return true;
             })
             ->defaultSort('codigo', 'asc');
@@ -388,7 +386,7 @@ class BienResource extends Resource
     {
         // 1. Filtro Global: Excluimos de raíz todos los bienes con estado 'DE BAJA'
         $query = parent::getEloquentQuery()->where('estado', '!=', 'DE BAJA');
-        
+
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
@@ -397,13 +395,13 @@ class BienResource extends Resource
             $query->where(function ($q) use ($user) {
                 $q->whereIn('idbienes', function ($subquery) use ($user) {
                     $subquery->select('ai.id_bienes')
-                             ->from('acta_items as ai')
-                             ->join('actas as a', 'a.idacta', '=', 'ai.id_acta')
-                             ->where('a.id_responsables', $user->responsable_id)
-                             ->where('a.tipo', '!=', 'DEVOLUCION')
-                             ->whereRaw('a.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = ai.id_bienes)');
+                        ->from('acta_items as ai')
+                        ->join('actas as a', 'a.idacta', '=', 'ai.id_acta')
+                        ->where('a.id_responsables', $user->responsable_id)
+                        ->where('a.tipo', '!=', 'DEVOLUCION')
+                        ->whereRaw('a.idacta = (SELECT MAX(a2.idacta) FROM acta_items as ai2 INNER JOIN actas as a2 ON a2.idacta = ai2.id_acta WHERE ai2.id_bienes = ai.id_bienes)');
                 })
-                ->orWhere('estado', 'DISPONIBLE');
+                    ->orWhere('estado', 'DISPONIBLE');
             });
         }
 

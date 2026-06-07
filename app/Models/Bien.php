@@ -3,6 +3,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Bien extends Model {
+    public $timestamps = false;
     protected $table = 'bienes';
     protected $primaryKey = 'idbienes';
 

@@ -38,8 +38,12 @@ class ServicioGasolinaResource extends Resource
                             ->label('Contrato / Proveedor de Combustible')
                             ->relationship('servicio', 'empresa', fn($query) => $query->where('tipo_servicio', 'COMBUSTIBLE'))
                             ->getOptionLabelFromRecordUsing(fn($record) => "[CUCE: {$record->cuce}] - {$record->empresa}")
-                            ->searchable()->preload()->required()->native(false),
-
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->native(false)
+                            ->live() // 👇 CRÍTICO: Avisa a la pantalla que el usuario seleccionó un proveedor
+                            ->afterStateUpdated(fn(callable $set) => $set('cantidad_litros', null)), // Limpia los litros si cambia de gasolinera
                         Forms\Components\DatePicker::make('fecha_vale')
                             ->label('Fecha del Vale')->default(now())->displayFormat('d/m/Y')->native(false)->required(),
 
@@ -80,8 +84,54 @@ class ServicioGasolinaResource extends Resource
 
                         Forms\Components\TextInput::make('cantidad_litros')
                             ->label('Cantidad Cargada')
-                            ->numeric()->prefix('Lts.')->minValue(0.01)->required()->placeholder('0.00'),
+                            ->numeric()
+                            ->prefix('Lts.')
+                            ->minValue(0.01)
+                            ->required()
+                            ->placeholder('0.00')
+                            // AYUDA VISUAL: Muestra el saldo arriba del cuadro de texto
+                            ->hint(function (\Filament\Forms\Get $get, ?\App\Models\ServicioGasolina $record) {
+                                $idServicio = $get('id_servicio');
+                                if (!$idServicio) return null;
 
+                                $servicio = \App\Models\Servicio::find($idServicio);
+                                if (!$servicio) return null;
+
+                                // Calculamos saldo (Excluyendo el vale actual si estamos en modo "Editar")
+                                $query = \App\Models\ServicioGasolina::where('id_servicio', $idServicio);
+                                if ($record) $query->where($record->getKeyName(), '!=', $record->getKey());
+
+                                $saldoDisponible = $servicio->cantidad_litros - $query->sum('cantidad_litros');
+
+                                return "Saldo actual: " . number_format($saldoDisponible, 2) . " Lts.";
+                            })
+                            ->hintColor('info') // Pinta el texto de azul
+
+                            // VALIDACIÓN ESTRICTA: Bloquea la base de datos si excede el límite 
+                            ->rules([
+                                fn(\Filament\Forms\Get $get, ?\App\Models\ServicioGasolina $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $idServicio = $get('id_servicio');
+                                    if (!$idServicio) return;
+
+                                    $servicio = \App\Models\Servicio::find($idServicio);
+                                    if (!$servicio) return;
+
+                                    $query = \App\Models\ServicioGasolina::where('id_servicio', $idServicio);
+
+                                    // Si estamos editando un vale, evitamos que su propia cantidad se reste dos veces
+                                    if ($record) {
+                                        $query->where($record->getKeyName(), '!=', $record->getKey());
+                                    }
+
+                                    $consumoHistorico = $query->sum('cantidad_litros');
+                                    $saldoDisponible = $servicio->cantidad_litros - $consumoHistorico;
+
+                                    // Si lo que intenta cargar es mayor al saldo restante, disparamos el error
+                                    if ((float) $value > $saldoDisponible) {
+                                        $fail("❌ Operación rechazada: Solo quedan " . number_format($saldoDisponible, 2) . " Lts. disponibles en este contrato.");
+                                    }
+                                },
+                            ]),
                         Forms\Components\Hidden::make('id_user')
                             ->default(fn() => Auth::id())->required(),
                     ])->columns(2),
