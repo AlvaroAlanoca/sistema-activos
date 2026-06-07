@@ -87,11 +87,15 @@ class BienResource extends Resource
                         ->placeholder('0.00')
                         ->required(),
 
-                    Forms\Components\DatePicker::make('fecha_compra')
-                        ->label('Fecha de la compra')
-                        ->displayFormat('d/m/Y')
-                        ->format('Y-m-d')
+                    \Filament\Forms\Components\DatePicker::make('fecha_compra')
+                        ->label('Fecha de Compra')
                         ->native(false)
+                        ->maxDate(now())
+                        ->displayFormat('d/m/Y') // Obliga a mostrar el formato latino: 31/12/2026
+                        ->placeholder('Seleccione una fecha...')
+                        ->prefixIcon('heroicon-o-calendar-days')
+                        ->prefixIconColor('primary')
+                        ->hintColor('info')
                         ->required(),
                 ])->columns(2),
 
